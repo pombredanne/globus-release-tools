@@ -1,0 +1,71 @@
+#! /usr/bin/python
+
+import os
+import sys
+
+import argparse
+
+sys.path.append(os.path.join(
+        os.path.dirname(sys.argv[0]),
+        "..",
+        "share",
+        "python"))
+
+import repo
+import repo.deb
+import repo.packages
+import repo.installers
+import repo.yum
+import repo.zypper
+
+parser = argparse.ArgumentParser(
+        description="Promote a package to a more stable release point")
+parser.add_argument(
+    "-r", "--root",
+    help="Synchronize packages to the ROOT directory ["
+            + repo.default_root + "]",
+    default=repo.default_root)
+parser.add_argument(
+    "-p", "--package",
+    help="Only sync the latest version of PACKAGE [all new packages]")
+parser.add_argument(
+    "-f", "--from",
+    help="Copy packages from the FROM release [unstable]",
+    dest="from_release",
+    choices=["unstable", "testing"],
+    default="unstable")
+parser.add_argument(
+    "-to", "--to",
+    help="Copy packages to the TO release [testing]",
+    choices=["testing", "stable"],
+    dest="to_release",
+    default="testing")
+parser.add_argument(
+    "-d", "--dryrun",
+    help="Display packages that would be copied, but don't actually execute the copy",
+    action='store_true')
+
+args = parser.parse_args()
+
+pkg_managers = [
+    repo.deb.Manager(root=args.root, use_cache=False),
+    repo.yum.Manager(root=args.root, use_cache=False),
+    repo.packages.Manager(root=args.root, use_cache=False),
+    repo.zypper.Manager(root=args.root, use_cache=False)
+]
+
+for manager in pkg_managers:
+    packages = manager.promote_packages(
+            name=args.package, from_release=args.from_release,
+            to_release=args.to_release, dryrun=args.dryrun)
+
+    if args.dryrun:
+        print "\n".join([(p.path + " to " + p.os) for p in packages])
+
+if args.package is None:
+    installers = repo.installer.Manager(
+            root=args.root).promote_packages(from_release=args.from_release,
+            to_release=args.to_release, dryrun=args.dryrun, use_cache=False)
+    if args.dryrun:
+        print "\n".join([(p.path + " to " + p.os) for p in packages])
+

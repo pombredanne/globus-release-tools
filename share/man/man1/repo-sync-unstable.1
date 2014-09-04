@@ -1,0 +1,82 @@
+'\" t
+.\"     Title: repo-sync-unstable
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 09/04/2014
+.\"    Manual: Globus Toolkit Manual
+.\"    Source: globus-release-tools
+.\"  Language: English
+.\"
+.TH "REPO\-SYNC\-UNSTABLE" "1" "09/04/2014" "globus\-release\-tools" "Globus Toolkit Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+repo-sync-unstable \- Add the newest packages from builds\&.globus\&.org to the unstable release
+.SH "SYNOPSIS"
+.sp
+\fBrepo\-sync\-unstable\fR [ \-h | \-\-help ]
+.sp
+\fBrepo\-sync\-unstable\fR OPTIONS
+.SH "DESCRIPTION"
+.sp
+The \fBrepo\-sync\-unstable\fR program copies binary and source packages from builds\&.globus\&.org into a \fBCACHE\fR, and then copies new packages to the \fIunstable\fR release stored at \fBROOT\fR\&.
+.sp
+The \fBrepo\-sync\-unstable\fR program can either copy all newer (by version number) packages and installers, or copy only particular packages, or only installers, depending on command\-line options\&.
+.sp
+If a \fBPACKAGE\fR is specified in the command\-line options, then only that package and its subpackages (\-dev, \-doc, etc) are copied\&. Otherwise, all packages newer (by version number) than those in \fBROOT\fR are copied to the \fBunstable\fR release\&.
+.sp
+If the \fB\-i\fR (or \fB\-\-installers\-only\fR) parameter is used, only installers (source and binary) are copied, but the individual packages are not\&.
+.SH "OPTIONS"
+.PP
+\fB\-h, \-\-help\fR
+.RS 4
+Show a help message and exit
+.RE
+.PP
+\fB\-r ROOT, \-\-root ROOT\fR
+.RS 4
+Synchronize packages to the ROOT directory
+.RE
+.PP
+\fB\-c CACHE, \-\-cache CACHE\fR
+.RS 4
+Cache files in CACHE directory
+.RE
+.PP
+\fB\-p PACKAGE, \-\-package PACKAGE\fR
+.RS 4
+Only sync the latest version of PACKAGE
+.RE
+.PP
+\fB\-i, \-\-installers\-only\fR
+.RS 4
+Only sync installers, not packages
+.RE
+.PP
+\fB\-d, \-\-dryrun\fR
+.RS 4
+Display packages that would be copied, but don\(cqt actually execute the copy
+.RE
+.SH "SEE ALSO"
+.sp
+repo\-promote\-package(1)
+.SH "AUTHOR"
+.sp
+Copyright \(co 2014 University of Chicago

@@ -1,0 +1,59 @@
+REPO-SYNC-UNSTABLE(1)
+=====================
+:doctype:       manpage
+:man source:    globus-release-tools
+:man manual:    Globus Toolkit Manual
+
+NAME
+----
+repo-sync-unstable - Add the newest packages from builds.globus.org to the unstable release
+
+[[repo-sync-unstable-SYNOPSIS]]
+SYNOPSIS
+--------
+*repo-sync-unstable* [ -h | --help ]
+
+*repo-sync-unstable* OPTIONS
+
+[[repo-sync-unstable-DESCRIPTION]]
+DESCRIPTION
+-----------
+The *repo-sync-unstable* program copies binary and source packages from
+builds.globus.org into a *CACHE*, and then copies new packages to the
+'unstable' release stored at *ROOT*.
+
+The *repo-sync-unstable* program can either copy all newer (by version number)
+packages and installers, or copy only particular packages, or only installers,
+depending on command-line options.
+
+If a *PACKAGE* is specified in the command-line options, then only that package
+and its subpackages (-dev, -doc, etc) are copied. Otherwise, all packages newer (by version number) than those in *ROOT* are copied to the *unstable* release.  
+
+If the *-i* (or *--installers-only*) parameter is used, only installers 
+(source and binary) are copied, but the individual packages are not.
+
+[[repo-sync-unstable-OPTIONS]]
+OPTIONS
+-------
+*-h, --help*::
+    Show a help message and exit
+*-r ROOT, --root ROOT*::
+    Synchronize packages to the ROOT directory
+*-c CACHE, --cache CACHE*::
+    Cache files in CACHE directory
+*-p PACKAGE, --package PACKAGE*::
+    Only sync the latest version of PACKAGE
+*-i, --installers-only*::
+    Only sync installers, not packages
+*-d, --dryrun*::
+    Display packages that would be copied, but don't actually execute the copy
+
+[[repo-sync-unstable-SEEALSO]]
+SEE ALSO
+--------
+repo-promote-package(1)
+
+[[repo-sync-unstable-AUTHOR]]
+AUTHOR
+------
+Copyright (C) 2014 University of Chicago

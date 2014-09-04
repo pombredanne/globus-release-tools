@@ -1,0 +1,53 @@
+REPO-PROMOTE-PACKAGE(1)
+=====================
+:doctype:       manpage
+:man source:    globus-release-tools
+:man manual:    Globus Toolkit Manual
+
+NAME
+----
+repo-promote-package - Promote a package to a more stable release point
+
+[[repo-promote-package-SYNOPSIS]]
+SYNOPSIS
+--------
+*repo-promote-package* [-h | --help]
+
+*repo-promote-package* [OPTIONS]
+
+[[repo-promote-package-DESCRIPTION]]
+DESCRIPTION
+-----------
+The *repo-sync-unstable* program copies binary and source packages within
+*ROOT*, from one release (+unstable+, +testing+, +stable+) to another.
+If a *PACKAGE* is specified in the command-line options, then only that package
+name is processed (including sub-packages such as '-doc' and '-dev' packages.
+Otherwise, all newer (by version number) packages are copied.
+
+[[repo-promote-package-OPTIONS]]
+OPTIONS
+-------
+*-h, --help*::
+    Show a help message and exit
+*-r ROOT, --root ROOT*::
+    Synchronize packages to the ROOT directory
+*-c CACHE, --cache CACHE*::
+    Cache files in CACHE directory
+*-p PACKAGE, --package PACKAGE*::
+    Only sync the latest version of PACKAGE
+*-f RELEASE, --from RELEASE*::
+    Copy packages from RELEASE (unstable or testing)
+*-to RELEASE, --to RELEASE*::
+    Copy packages to the RELEASE (testing or stable)
+*-d, --dryrun*::
+    Display packages that would be copied, but don't actually execute the copy
+
+[[repo-promote-package-SEEALSO]]
+SEE ALSO
+--------
+repo-sync-unstable(1)
+
+[[repo-promote-package-AUTHOR]]
+AUTHOR
+------
+Copyright (C) 2014 University of Chicago
