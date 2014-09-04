@@ -158,4 +158,4 @@ class Manager(repo.Manager):
             return self.releases['release']
 
     def package_name(self, name):
-        return name.replace("-", "_")
+        return name.replace("-", "_") if name is not None else None
