@@ -270,7 +270,10 @@ class Manager(object):
         self.releases = releases
 
     def get_release(self, releasename):
-        return self.releases[releasename]
+        if releasename == 'cache':
+            return self.cache.release
+        else:
+            return self.releases[releasename]
 
     def package_name(self, name):
         return name.replace("_", "-") if name is not None else None

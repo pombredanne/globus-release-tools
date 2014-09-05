@@ -231,7 +231,8 @@ class Cache(repo.Cache):
                     os.path.islink(this_repo_topdir):
                 this_repo_name = os.path.join(osname, osver)
                 cached_repos.append(this_repo_name)
-        self.release = Release("cache", cached_rpm_root, cached_repos)
+        self.release = Release("cache", os.path.join(cache, "rpm"),
+                cached_repos)
 
 class Manager(repo.Manager):
     """

@@ -6,7 +6,7 @@ class Version(object):
     Version class to allow comparison of package versions, including
     release versions and wildcards for releases
     """
-    def __init__(self, version, release):
+    def __init__(self, version, release=None):
         """
         Initialize with a version string and a release string. If the release
         string is None, acts as a wildcard that matches all releases of that

@@ -42,8 +42,12 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-releases = [args.from_release]
-use_cache = args.from_release == 'cache'
+if args.from_release == 'cache':
+    releases = []
+    use_cache = True
+else:
+    releases = [args.from_release]
+    use_cache = False
 
 pkg_managers = [
     repo.deb.Manager(root=args.root, releases=releases, use_cache=use_cache),
@@ -52,9 +56,13 @@ pkg_managers = [
 ]
 
 pdict = dict()
+if args.version is not None:
+    version = repo.package.Version(args.version)
+else:
+    version = None
 for manager in pkg_managers:
     packages = [src_info for src_info in manager.get_release(args.from_release).get_packages(
-            name=manager.package_name(args.package), newest_only=args.newest, version=args.version)]
+            name=manager.package_name(args.package), newest_only=args.newest, version=version)]
 
     for p in packages:
         pkey = "-".join([p.name, p.version.strversion])
