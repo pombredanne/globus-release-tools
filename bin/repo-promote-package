@@ -35,7 +35,7 @@ parser.add_argument(
     choices=["unstable", "testing"],
     default="unstable")
 parser.add_argument(
-    "-to", "--to",
+    "-t", "--to",
     help="Copy packages to the TO release [testing]",
     choices=["testing", "stable"],
     dest="to_release",
@@ -47,25 +47,35 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+releases = [args.from_release, args.to_release]
+
 pkg_managers = [
-    repo.deb.Manager(root=args.root, use_cache=False),
-    repo.yum.Manager(root=args.root, use_cache=False),
-    repo.packages.Manager(root=args.root, use_cache=False),
-    repo.zypper.Manager(root=args.root, use_cache=False)
+    repo.deb.Manager(root=args.root, releases=releases, use_cache=False),
+    repo.yum.Manager(root=args.root, releases=releases, use_cache=False),
+    repo.zypper.Manager(root=args.root, releases=releases, use_cache=False)
 ]
 
+pdict = dict()
 for manager in pkg_managers:
     packages = manager.promote_packages(
             name=args.package, from_release=args.from_release,
             to_release=args.to_release, dryrun=args.dryrun)
 
     if args.dryrun:
-        print "\n".join([(p.path + " to " + p.os) for p in packages])
+        for p in packages:
+            pkey = "-".join([p.name, p.version.strversion])
+            if pkey not in pdict:
+                pdict[pkey] = set()
+            pdict[pkey].add(p.os)
+
+if args.dryrun:
+    for p in pdict:
+        print p, "to [", ", ".join(pdict[p]), "]"
 
 if args.package is None:
-    installers = repo.installer.Manager(
+    installers = repo.installers.Manager(
             root=args.root).promote_packages(from_release=args.from_release,
-            to_release=args.to_release, dryrun=args.dryrun, use_cache=False)
+            to_release=args.to_release, dryrun=args.dryrun)
     if args.dryrun:
-        print "\n".join([(p.path + " to " + p.os) for p in packages])
+        print "\n".join([(os.path.basename(p.path) + " to " + p.os) for p in installers])
 

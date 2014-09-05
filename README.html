@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
 <meta name="generator" content="AsciiDoc 8.6.8" />
-<title>REPO-SYNC-UNSTABLE(1)</title>
+<title>Globus Release Tools</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
 
@@ -729,113 +729,85 @@ asciidoc.install();
 /*]]>*/
 </script>
 </head>
-<body class="manpage">
+<body class="article">
 <div id="header">
-<h1>
-REPO-SYNC-UNSTABLE(1) Manual Page
-</h1>
-<h2>NAME</h2>
-<div class="sectionbody">
-<p>repo-sync-unstable -
-   Add the newest packages from builds.globus.org to the unstable release
-</p>
-</div>
+<h1>Globus Release Tools</h1>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="repo-sync-unstable-SYNOPSIS">SYNOPSIS</h2>
+<h2 id="_overview">Overview</h2>
 <div class="sectionbody">
-<div class="paragraph"><p><strong>repo-sync-unstable</strong> [ -h | --help ]</p></div>
-<div class="paragraph"><p><strong>repo-sync-unstable</strong> OPTIONS</p></div>
+<div class="paragraph"><p>The tools in this package are used to manage software releases for the
+Globus Toolkit project, so that packages, installers, and repositories
+can be transferred from our build system to the Globus web server.</p></div>
+<div class="paragraph"><p>There are three tools in this release, <strong>repo-sync-unstable</strong>,
+<strong>repo-promote-package</strong>, and <strong>repo-list-packages</strong>. The <strong>repo-sync-unstable</strong> tool
+caches packages from the builds.globus.org repository and publishes them as
+part of the "unstable" release of the Globus Toolkit. The
+<strong>repo-promote-package</strong> tool copies a package and its metadata between selected
+releases, from one of <em>unstable</em> &#8594; <em>testing</em> &#8594; <em>stable</em>. The
+<strong>repo-list-packages</strong> program will list the contents of a release, optionally
+filtering by a base package name.</p></div>
+<div class="paragraph"><p>The <strong>repo-sync-unstable</strong> and <strong>repo-promote-package</strong> tools have a <em>-dryrun</em>
+option that will not copy packages, though directory trees and metadata might
+be updated depending on the state of the release directories.</p></div>
+<div class="paragraph"><p>The tools use a set of python packages in <code>share/python/repo</code> to manage
+the different directory layouts and repository metadata management commands
+for the debian, yum, zypper, source tarball, and installer repository
+types.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">these package tools can run for multiple minutes depending on the size of
+the package repository metadata, as they potentially run <strong>reprepro</strong> and/or
+<strong>createrepo</strong> multiple times and parse the (sometimes compressed) repository
+metadata.</td>
+</tr></table>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">You&#8217;ll need access to the repository private key in order to publish
+debian or zypper packages as those repositories are signed.</td>
+</tr></table>
+</div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="repo-sync-unstable-DESCRIPTION">DESCRIPTION</h2>
+<h2 id="_examples">Examples</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>The <strong>repo-sync-unstable</strong> program copies binary and source packages from
-builds.globus.org into a <strong>CACHE</strong>, and then copies new packages to the
-<em>unstable</em> release stored at <strong>ROOT</strong>.</p></div>
-<div class="paragraph"><p>The <strong>repo-sync-unstable</strong> program can either copy all newer (by version number)
-packages and installers, or copy only particular packages, or only installers,
-depending on command-line options.</p></div>
-<div class="paragraph"><p>If a <strong>PACKAGE</strong> is specified in the command-line options, then only that package
-and its subpackages (-dev, -doc, etc) are copied. Otherwise, all packages newer (by version number) than those in <strong>ROOT</strong> are copied to the <strong>unstable</strong> release.</p></div>
-<div class="paragraph"><p>If the <strong>-i</strong> (or <strong>--installers-only</strong>) parameter is used, only installers
-(source and binary) are copied, but the individual packages are not.</p></div>
+<div class="paragraph"><p>To update the <em>unstable</em> repository with all new packages:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>% globus-sync-unstable</code></pre>
+</div></div>
+<div class="paragraph"><p>To promote the <em>globus-xio</em> package from <strong>unstable</strong> to <strong>testing</strong>:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>% globus-promote-package -f unstable -t testing -p globus-xio</code></pre>
+</div></div>
+<div class="paragraph"><p>To publish a new set of installers:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>% globus-sync-unstable -i</code></pre>
+</div></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="repo-sync-unstable-OPTIONS">OPTIONS</h2>
+<h2 id="_links">Links</h2>
 <div class="sectionbody">
-<div class="dlist"><dl>
-<dt class="hdlist1">
-<strong>-h, --help</strong>
-</dt>
-<dd>
-<p>
-    Show a help message and exit
-</p>
-</dd>
-<dt class="hdlist1">
-<strong>-r ROOT, --root ROOT</strong>
-</dt>
-<dd>
-<p>
-    Synchronize packages to the ROOT directory
-</p>
-</dd>
-<dt class="hdlist1">
-<strong>-c CACHE, --cache CACHE</strong>
-</dt>
-<dd>
-<p>
-    Cache files in CACHE directory
-</p>
-</dd>
-<dt class="hdlist1">
-<strong>-p PACKAGE, --package PACKAGE</strong>
-</dt>
-<dd>
-<p>
-    Only sync the latest version of PACKAGE
-</p>
-</dd>
-<dt class="hdlist1">
-<strong>-i, --installers-only</strong>
-</dt>
-<dd>
-<p>
-    Only sync installers, not packages
-</p>
-</dd>
-<dt class="hdlist1">
-<strong>-d, --dryrun</strong>
-</dt>
-<dd>
-<p>
-    Display packages that would be copied, but don&#8217;t actually execute the copy
-</p>
-</dd>
-</dl></div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="repo-sync-unstable-SEEALSO">SEE ALSO</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>repo-promote-package(1)</p></div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="repo-sync-unstable-AUTHOR">AUTHOR</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>Copyright &#169; 2014 University of Chicago</p></div>
+<div class="paragraph"><p>For further information about the tools, see <a href="share/doc/repo-promote-package.html">repo-promote-package</a> and <a href="share/doc/repo-sync-unstable.html">repo-sync-unstable</a> documentation</p></div>
 </div>
 </div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-09-04 16:17:50 CDT
+Last updated 2014-09-05 12:08:08 CDT
 </div>
 </div>
 </body>

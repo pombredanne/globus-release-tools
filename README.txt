@@ -1,0 +1,52 @@
+Globus Release Tools
+====================
+
+Overview
+--------
+The tools in this package are used to manage software releases for the
+Globus Toolkit project, so that packages, installers, and repositories
+can be transferred from our build system to the Globus web server.
+
+There are three tools in this release, *repo-sync-unstable*,
+*repo-promote-package*, and *repo-list-packages*. The *repo-sync-unstable* tool
+caches packages from the builds.globus.org repository and publishes them as
+part of the "unstable" release of the Globus Toolkit. The
+*repo-promote-package* tool copies a package and its metadata between selected
+releases, from one of 'unstable' -> 'testing' -> 'stable'. The
+*repo-list-packages* program will list the contents of a release, optionally
+filtering by a base package name.
+
+The *repo-sync-unstable* and *repo-promote-package* tools have a '-dryrun'
+option that will not copy packages, though directory trees and metadata might
+be updated depending on the state of the release directories.
+
+The tools use a set of python packages in +share/python/repo+ to manage
+the different directory layouts and repository metadata management commands
+for the debian, yum, zypper, source tarball, and installer repository
+types.
+
+NOTE: these package tools can run for multiple minutes depending on the size of
+the package repository metadata, as they potentially run *reprepro* and/or
+*createrepo* multiple times and parse the (sometimes compressed) repository
+metadata.
+
+NOTE: You'll need access to the repository private key in order to publish
+debian or zypper packages as those repositories are signed.
+
+Examples
+--------
+To update the 'unstable' repository with all new packages:
+
+    % globus-sync-unstable
+
+To promote the 'globus-xio' package from *unstable* to *testing*:
+
+    % globus-promote-package -f unstable -t testing -p globus-xio
+
+To publish a new set of installers:
+
+    % globus-sync-unstable -i
+
+Links
+-----
+For further information about the tools, see link:share/doc/repo-promote-package.html[repo-promote-package] and link:share/doc/repo-sync-unstable.html[repo-sync-unstable] documentation

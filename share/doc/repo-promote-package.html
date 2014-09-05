@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.8" />
 <title>REPO-PROMOTE-PACKAGE(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -94,9 +94,7 @@ ul > li > * { color: black; }
   padding: 0;
   margin: 0;
 }
-pre {
-  white-space: pre-wrap;
-}
+
 
 #author {
   color: #527bbd;
@@ -225,7 +223,7 @@ div.exampleblock > div.content {
 }
 
 div.imageblock div.content { padding-left: 0; }
-span.image img { border-style: none; vertical-align: text-bottom; }
+span.image img { border-style: none; }
 a.image:visited { color: white; }
 
 dl {
@@ -754,7 +752,7 @@ REPO-PROMOTE-PACKAGE(1) Manual Page
 <div class="sect1">
 <h2 id="repo-promote-package-DESCRIPTION">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>The <strong>repo-sync-unstable</strong> program copies binary and source packages within
+<div class="paragraph"><p>The <strong>repo-promote-package</strong> program copies binary and source packages within
 <strong>ROOT</strong>, from one release (<code>unstable</code>, <code>testing</code>, <code>stable</code>) to another.
 If a <strong>PACKAGE</strong> is specified in the command-line options, then only that package
 name is processed (including sub-packages such as <em>-doc</em> and <em>-dev</em> packages.
@@ -794,7 +792,7 @@ Otherwise, all newer (by version number) packages are copied.</p></div>
 </dt>
 <dd>
 <p>
-    Only sync the latest version of PACKAGE
+    Only promote the latest version of PACKAGE
 </p>
 </dd>
 <dt class="hdlist1">
@@ -840,7 +838,7 @@ Otherwise, all newer (by version number) packages are copied.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-09-04 14:40:26 EDT
+Last updated 2014-09-05 12:16:53 CDT
 </div>
 </div>
 </body>

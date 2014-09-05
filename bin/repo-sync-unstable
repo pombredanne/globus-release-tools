@@ -46,6 +46,9 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+# Here we don't restrict the releases to ["unstable"], as we want at least
+# an empty repository in "testing" and "stable" for each operating system
+# we support so that the repo package doesn't complain about missing files
 if not args.installers_only:
     pkg_managers = [
         repo.deb.Manager(cache_root=args.cache, root=args.root),
