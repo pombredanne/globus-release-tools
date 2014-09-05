@@ -1,0 +1,49 @@
+REPO-LIST-PACKAGES(1)
+=====================
+:doctype:       manpage
+:man source:    globus-release-tools
+:man manual:    Globus Toolkit Manual
+
+NAME
+----
+repo-list-packages - List packages in a release
+
+[[repo-list-packages-SYNOPSIS]]
+SYNOPSIS
+--------
+*repo-list-packages* [-h | --help]
+
+*repo-list-packages* [OPTIONS] RELEASE
+
+[[repo-list-packages-DESCRIPTION]]
+DESCRIPTION
+-----------
+The *repo-list-packages* program list the binary and source packages within
+*ROOT*, from one *RELEASE* (+unstable+, +testing+, +stable+).
+If a *PACKAGE* is specified in the command-line options, then only that package
+name is processed (including sub-packages such as '-doc' and '-dev' packages.
+Otherwise, all newer (by version number) packages are copied.
+
+[[repo-list-packages-OPTIONS]]
+OPTIONS
+-------
+*-h, --help*::
+    Show a help message and exit
+*-r ROOT, --root ROOT*::
+    Synchronize packages to the ROOT directory
+*-p PACKAGE, --package PACKAGE*::
+    Only print info about PACKAGE
+*-v VERSION, --version VERSION*::
+    Only print info about VERSION of PACKAGE
+*-n, --newest*::
+    Only print info about the newest VERSION
+
+[[repo-list-packages-SEEALSO]]
+SEE ALSO
+--------
+repo-sync-unstable(1)
+
+[[repo-list-packages-AUTHOR]]
+AUTHOR
+------
+Copyright (C) 2014 University of Chicago

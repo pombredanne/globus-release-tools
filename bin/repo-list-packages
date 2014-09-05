@@ -1,0 +1,68 @@
+#! /usr/bin/python
+
+import os
+import sys
+
+import argparse
+
+sys.path.append(os.path.join(
+        os.path.dirname(sys.argv[0]),
+        "..",
+        "share",
+        "python"))
+
+import repo
+import repo.deb
+import repo.packages
+import repo.installers
+import repo.yum
+import repo.zypper
+
+parser = argparse.ArgumentParser(
+        description="Promote a package to a more stable release point")
+parser.add_argument(
+    "-r", "--root",
+    help="List packages from the ROOT directory ["
+            + repo.default_root + "]",
+    default=repo.default_root)
+parser.add_argument(
+    "-p", "--package",
+    help="Only list PACKAGE [all packages]")
+parser.add_argument(
+    "-v", "--version",
+    help="Only list a particular VERSION [all versions]")
+parser.add_argument(
+    "-n", "--newest",
+    help="Only list the newest [False]",
+    action="store_true")
+parser.add_argument(
+    "from_release",
+    help="List packages in the FROM release [unstable]",
+    choices=["unstable", "testing", "stable", "cache"])
+
+args = parser.parse_args()
+
+releases = [args.from_release]
+use_cache = args.from_release == 'cache'
+
+pkg_managers = [
+    repo.deb.Manager(root=args.root, releases=releases, use_cache=use_cache),
+    repo.yum.Manager(root=args.root, releases=releases, use_cache=use_cache),
+    repo.zypper.Manager(root=args.root, releases=releases, use_cache=use_cache)
+]
+
+pdict = dict()
+for manager in pkg_managers:
+    packages = [src_info for src_info in manager.get_release(args.from_release).get_packages(
+            name=manager.package_name(args.package), newest_only=args.newest, version=args.version)]
+
+    for p in packages:
+        pkey = "-".join([p.name, p.version.strversion])
+        if pkey not in pdict:
+            pdict[pkey] = set()
+        pdict[pkey].add(p.os)
+
+for p in pdict:
+    oslist = list(pdict[p])
+    oslist.sort()
+    print p, "[", ", ".join(oslist), "]"
