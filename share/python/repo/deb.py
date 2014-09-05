@@ -266,12 +266,34 @@ class Manager(repo.Manager):
         *use_cache*::
             (Optional) Parse packages in the cache
         """
-        cache = Cache(cache_root) if use_cache else None
         deb_releases = {}
+
+        if use_cache:
+            cache = Cache(cache_root)
+            codenames = cache.get_operating_systems()
+        else:
+            cache = None
+            codenames = Manager.find_codenames(root, releases[0])
+
         for release in releases:
             print "Initializing", release
             deb_releases[release] = Release(
                     release,
                     os.path.join(root, release, 'deb'),
-                    cache.get_operating_systems())
+                    codenames)
         super(Manager, self).__init__(cache, deb_releases)
+
+    @staticmethod
+    def find_codenames(root, release):
+        codenames = []
+        release_dists_dir = os.path.join(root, release, "deb", "dists")
+
+        if os.path.exists(release_dists_dir):
+            for codename in os.listdir(release_dists_dir):
+                if os.path.isdir(os.path.join(
+                            release_dists_dir, codename)):
+                    codenames.append(codename)
+        return codenames
+
+    def __str__(self):
+        return " ".join(["Deb Manager [", ",".join(self.releases.keys()), "]"])

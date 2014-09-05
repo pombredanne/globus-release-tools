@@ -38,9 +38,10 @@ class Repository(repo.Repository):
     prq_restring = r"\+Prq:[\t ]*(?P<prq>(\n(?!-Prq:).*)*)\n-Prq:\n"
     prv_restring = r"\+Prv:[\t ]*(?P<prv>(\n(?!-Prv:).*)*)\n-Prv:\n"
     req_restring = r"\+Req:[\t ]*(?P<requires>(\n(?!-Req:).*)*)\n-Req:\n"
+    dashd_restring = r"##[\t ]+-d.*\n"
     start_restring = r"##-+\n"
 
-    parse_re = re.compile(ver_restring + "|" + start_restring + "(" + "|".join([grp_restring, lic_restring, loc_restring, pkg_restring, shr_restring, siz_restring, src_restring, tim_restring, con_restring, obs_restring, prq_restring, prv_restring, req_restring]) + ")+", re.M)
+    parse_re = re.compile(ver_restring + "|" + start_restring + "(" + "|".join([grp_restring, lic_restring, loc_restring, pkg_restring, shr_restring, siz_restring, src_restring, tim_restring, con_restring, obs_restring, prq_restring, prv_restring, req_restring, dashd_restring]) + ")+", re.M)
 
     def __init__(self, repo_path, osname):
         super(Repository, self).__init__()
@@ -60,6 +61,8 @@ class Repository(repo.Repository):
         offset = 0
         while offset < datasize:
             m = Repository.parse_re.match(metadata[offset:])
+            if m is None:
+                raise Exception("Parsing error", metadata[offset:offset+200])
             offset += len(m.group(0))
             if m is not None and m.group('pkgname') is not None:
                 srcref = None
@@ -218,17 +221,14 @@ class Cache(repo.Cache):
         super(Cache, self).__init__(cache, "rpm", ['el', 'fedora'])
         self.sync()
 
-        cached_rpm_root = os.path.join(cache, 'rpm')
+        osname = 'sles'
+        osdir = os.path.join(cache, 'rpm', osname)
         cached_repos = []
-        for osname in os.listdir(cached_rpm_root):
-            if osname != "sles":
-                continue
-            osdir = os.path.join(cached_rpm_root, osname)
-            for osver in os.listdir(osdir):
-                this_repo_topdir = os.path.join(osdir, osver)
-                if os.path.islink(this_repo_topdir) or \
-                        not os.path.isdir(this_repo_topdir):
-                    continue
+
+        for osver in os.listdir(osdir):
+            this_repo_topdir = os.path.join(osdir, osver)
+            if os.path.isdir(this_repo_topdir) and not \
+                    os.path.islink(this_repo_topdir):
                 this_repo_name = os.path.join(osname, osver)
                 cached_repos.append(this_repo_name)
         self.release = Release("cache", cached_rpm_root, cached_repos)
@@ -259,14 +259,34 @@ class Manager(repo.Manager):
         *use_cache*::
             (Optional) Parse packages in the cache
         """
-        cache = Cache(cache_root) if use_cache else None
+        if use_cache:
+            cache = Cache(cache_root) if use_cache else None
+            oses = [osname for osname in cache.get_operating_systems()]
+        else:
+            cache = None
+            oses = Manager.find_operating_systems(root, releases[0])
+
         zypper_releases = {}
         for release in releases:
-            print "Initializing", release, "for", ", ".join(cache.get_operating_systems())
-
             zypper_releases[release] = Release(
                     release,
                     os.path.join(root, release, 'rpm'),
-                    [ osname for osname in cache.get_operating_systems() ])
+                    oses)
         super(Manager, self).__init__(cache, zypper_releases)
 
+    @staticmethod
+    def find_operating_systems(root, release):
+        oses = []
+
+        sles_top_dir = os.path.join(root, release, "rpm", "sles")
+
+        for osver in os.listdir(sles_top_dir):
+            osnameverdir = os.path.join(sles_top_dir, osver)
+            if os.path.isdir(osnameverdir) and not os.path.islink(osnameverdir):
+                osnamever = os.path.join("sles", osver)
+                oses.append(osnamever)
+    
+        return oses
+
+    def __str__(self):
+        return " ".join(["Zypper Manager [", ",".join(self.releases.keys()), "]"])

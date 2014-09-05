@@ -242,14 +242,40 @@ class Manager(repo.Manager):
         *use_cache*::
             (Optional) Parse packages in the cache
         """
-        cache = Cache(cache_root) if use_cache else None
+        if use_cache:
+            cache = Cache(cache_root) if use_cache else None
+            oses = { osname: cache.get_architectures(osname)
+                     for osname in cache.get_operating_systems() }
+        else:
+            cache = None
+            oses = Manager.find_operating_systems(root, releases[0])
+
         yum_releases = {}
         for release in releases:
-            print "Initializing", release
             yum_releases[release] = Release(
                     release,
                     os.path.join(root, release, 'rpm'),
-                    { osname: cache.get_architectures(osname)
-                            for osname in cache.get_operating_systems()})
+                    oses)
         super(Manager, self).__init__(cache, yum_releases)
 
+    @staticmethod
+    def find_operating_systems(root, release):
+        oses = {}
+        release_os_dir = os.path.join(root, release, "rpm")
+
+        if os.path.exists(release_os_dir):
+            for osname in os.listdir(release_os_dir):
+                if osname == 'sles':
+                    continue
+                osnamedir = os.path.join(release_os_dir, osname)
+                for osver in os.listdir(osnamedir):
+                    osnamever = os.path.join(osname, osver)
+                    osnameverdir = os.path.join(release_os_dir,osnamever)
+                    if os.path.isdir(osnameverdir):
+                        oses[osnamever] = []
+                        for arch in os.listdir(osnameverdir):
+                            oses[osnamever].append(arch)
+        return oses
+
+    def __str__(self):
+        return " ".join(["Yum Manager [", ",".join(self.releases.keys()), "]"])

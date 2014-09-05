@@ -159,3 +159,6 @@ class Manager(repo.Manager):
 
     def package_name(self, name):
         return name.replace("-", "_") if name is not None else None
+
+    def __str__(self):
+        return " ".join(["Packages Manager [", ",".join(self.releases.keys()), "]"])

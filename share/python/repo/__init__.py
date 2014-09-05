@@ -314,7 +314,7 @@ class Manager(object):
         if from_release is None:
             from_release = self.cache.release
         else:
-            from_release = self.releases[from_release]
+            from_release = self.get_release(from_release)
 
         # Find source packages in the from_release that are newer versions than
         # those in the to_release

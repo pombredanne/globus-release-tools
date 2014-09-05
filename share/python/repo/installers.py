@@ -153,7 +153,6 @@ class Cache(repo.Cache):
         """
         result_artifacts = []
 
-        print "Listing artifacts for " + i.name
         jenkins_job_url = self.JOB_PATTERN % (i.name)
         opener = urllib.URLopener()
         resp = opener.open(jenkins_job_url)
@@ -220,7 +219,5 @@ class Manager(repo.Manager):
         else:
             return self.releases['release']
 
-    def promote_packages(self, **kwargs):
-        if 'name' in kwargs:
-            kwargs['name'] = kwargs['name'].replace("-", "_")
-        return super(Manager, self).promote_packages(**kwargs)
+    def __str__(self):
+        return " ".join(["Installers Manager [", ",".join(self.releases.keys()), "]"])
