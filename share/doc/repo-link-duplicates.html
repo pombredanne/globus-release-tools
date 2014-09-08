@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
 <meta name="generator" content="AsciiDoc 8.6.9" />
-<title>Globus Release Tools</title>
+<title>REPO-LINK-DUPLICATES(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
 
@@ -731,99 +731,74 @@ asciidoc.install();
 /*]]>*/
 </script>
 </head>
-<body class="article">
+<body class="manpage">
 <div id="header">
-<h1>Globus Release Tools</h1>
+<h1>
+REPO-LINK-DUPLICATES(1) Manual Page
+</h1>
+<h2>NAME</h2>
+<div class="sectionbody">
+<p>repo-link-duplicates -
+   Hardlink identical binary packages
+</p>
+</div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_overview">Overview</h2>
+<h2 id="repo-link-duplicates-SYNOPSIS">SYNOPSIS</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>The tools in this package are used to manage software releases for the
-Globus Toolkit project, so that packages, installers, and repositories
-can be transferred from our build system to the Globus web server.</p></div>
+<div class="paragraph"><p><strong>repo-link-duplicates</strong> [-h | --help]</p></div>
+<div class="paragraph"><p><strong>repo-link-duplicates</strong> [OPTIONS]</p></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_repository_management_tools">Repository Management Tools</h2>
+<h2 id="repo-link-duplicates-DESCRIPTION">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>The tools in this release are <strong>repo-sync-unstable</strong>,
-<strong>repo-promote-package</strong>, <strong>repo-list-packages</strong>, and <strong>repo-link-duplicates</strong>.</p></div>
-<div class="paragraph"><p>The <strong>repo-sync-unstable</strong> tool caches packages from the <code>builds.globus.org</code>
-repository and publishes them as part of the <em>unstable</em> release of the Globus
-Toolkit.</p></div>
-<div class="paragraph"><p>The <strong>repo-promote-package</strong> tool copies a package and its metadata between
-selected releases, from one of <em>unstable</em> &#8594; <em>testing</em> &#8594; <em>stable</em>.</p></div>
-<div class="paragraph"><p>The <strong>repo-list-packages</strong> program will list the contents of a release,
-optionally filtering by a base package name.</p></div>
-<div class="paragraph"><p>The <strong>repo-link-duplicates</strong> tool replaces identical binary package files
-with hard links.</p></div>
-<div class="paragraph"><p>The <strong>repo-sync-unstable</strong> and <strong>repo-promote-package</strong> tools have a <em>-dryrun</em>
-option that will not copy packages, though directory trees and metadata might
-be updated depending on the state of the release directories.</p></div>
-<div class="paragraph"><p>The tools use a set of python packages in <code>share/python/repo</code> to manage
-the different directory layouts and repository metadata management commands
-for the debian, yum, zypper, source tarball, and installer repository
-types.</p></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">these package tools can run for multiple minutes depending on the size of
-the package repository metadata, as they potentially run <strong>reprepro</strong> and/or
-<strong>createrepo</strong> multiple times and parse the (sometimes compressed) repository
-metadata.</td>
-</tr></table>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">You&#8217;ll need access to the repository private key in order to publish
-debian or zypper packages as those repositories are signed.</td>
-</tr></table>
-</div>
+<div class="paragraph"><p>The <strong>repo-link-duplicates</strong> replaces identical binary package identical files in
+a directory tree with hard links. It only considers duplicates of
+<code>*.tar.gz</code>, <code>*.deb</code>, and <code>*.rpm</code> files.</p></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_examples">Examples</h2>
+<h2 id="repo-link-duplicates-OPTIONS">OPTIONS</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>To update the <em>unstable</em> repository with all new packages:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>% globus-sync-unstable</code></pre>
-</div></div>
-<div class="paragraph"><p>To promote the <em>globus-xio</em> package from <strong>unstable</strong> to <strong>testing</strong>:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>% globus-promote-package -f unstable -t testing -p globus-xio</code></pre>
-</div></div>
-<div class="paragraph"><p>To publish a new set of installers:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><code>% globus-sync-unstable -i</code></pre>
-</div></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<strong>-h, --help</strong>
+</dt>
+<dd>
+<p>
+    Show a help message and exit
+</p>
+</dd>
+<dt class="hdlist1">
+<strong>-r ROOT, --root ROOT</strong>
+</dt>
+<dd>
+<p>
+    Link duplicates based in the ROOT directory
+</p>
+</dd>
+</dl></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_links">Links</h2>
+<h2 id="repo-link-duplicates-SEEALSO">SEE ALSO</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>For further information about the tools, see the
-<a href="share/doc/repo-promote-package.html">repo-promote-package</a>,
-<a href="share/doc/repo-sync-unstable.html">repo-sync-unstable</a>,
-<a href="share/doc/repo-list-packages.html">repo-list-packages</a>,
-and
-<a href="share/doc/repo-link-duplicates.html">repo-link-duplicates</a>,
-documentation.</p></div>
+<div class="paragraph"><p>repo-sync-unstable(1)</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="repo-link-duplicates-AUTHOR">AUTHOR</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Copyright &#169; 2014 University of Chicago</p></div>
 </div>
 </div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-09-08 14:25:05 EDT
+Last updated 2014-09-08 14:29:17 EDT
 </div>
 </div>
 </body>

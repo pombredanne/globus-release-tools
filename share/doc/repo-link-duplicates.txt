@@ -1,0 +1,41 @@
+REPO-LINK-DUPLICATES(1)
+=====================
+:doctype:       manpage
+:man source:    globus-release-tools
+:man manual:    Globus Toolkit Manual
+
+NAME
+----
+repo-link-duplicates - Hardlink identical binary packages
+
+[[repo-link-duplicates-SYNOPSIS]]
+SYNOPSIS
+--------
+*repo-link-duplicates* [-h | --help]
+
+*repo-link-duplicates* [OPTIONS]
+
+[[repo-link-duplicates-DESCRIPTION]]
+DESCRIPTION
+-----------
+The *repo-link-duplicates* replaces identical binary package identical files in
+a directory tree with hard links. It only considers duplicates of
+`*.tar.gz`, `*.deb`, and `*.rpm` files.
+
+[[repo-link-duplicates-OPTIONS]]
+OPTIONS
+-------
+*-h, --help*::
+    Show a help message and exit
+*-r ROOT, --root ROOT*::
+    Link duplicates based in the ROOT directory
+
+[[repo-link-duplicates-SEEALSO]]
+SEE ALSO
+--------
+repo-sync-unstable(1)
+
+[[repo-link-duplicates-AUTHOR]]
+AUTHOR
+------
+Copyright (C) 2014 University of Chicago
