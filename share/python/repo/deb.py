@@ -276,7 +276,6 @@ class Manager(repo.Manager):
             codenames = Manager.find_codenames(root, releases[0])
 
         for release in releases:
-            print "Initializing", release
             deb_releases[release] = Release(
                     release,
                     os.path.join(root, release, 'deb'),
