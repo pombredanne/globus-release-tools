@@ -8,6 +8,8 @@ import gzip
 import os
 import os.path
 import shutil
+import sqlite3
+
 import repo
 import repo.package
 
@@ -43,44 +45,28 @@ class Repository(repo.Repository):
     datatag = "{http://linux.duke.edu/metadata/repo}data"
 
     @staticmethod
-    def __get_primary_path(repodir):
+    def __get_primary_path(repodir, xml):
         repomd_path = os.path.join(repodir, "repodata", "repomd.xml")
         f = file(repomd_path, "r")
         tree = ET.fromstring(f.read())
         f.close()
         for data in tree:
             if data.tag == Repository.datatag:
-                if data.attrib['type'] == 'primary':
+                if xml is True and data.attrib['type'] == 'primary':
+                    location = data.find(Repository.repolocationtag)
+                    return os.path.join(repodir, location.attrib['href'])
+                elif xml is False and data.attrib['type'] == 'primary_db':
                     location = data.find(Repository.repolocationtag)
                     return os.path.join(repodir, location.attrib['href'])
 
 
-    @staticmethod
-    def __parse_primary_xml(xmlpath):
+    def __parse_primary_xml(self, xmlpath):
         f = gzip.open(xmlpath,'rb')
         tree = ET.fromstring(f.read())
         f.close()
+        packages = dict()
 
-        return tree
-
-    def __init__(self, repo_top, osname, arch):
-        super(Repository, self).__init__()
-        self.repo_path = os.path.join(repo_top, osname, arch)
-        self.dirty = False
-        self.os = osname
-
-        if not os.path.exists(self.repo_path):
-            os.makedirs(self.repo_path, 0775)
-
-        try:
-            primary_path = Repository.__get_primary_path(self.repo_path)
-        except:
-            self.__createrepo()
-            primary_path = Repository.__get_primary_path(self.repo_path)
-
-        xml = Repository.__parse_primary_xml(primary_path)
-
-        for package in xml:
+        for package in tree:
             packagename = package.find(Repository.nametag).text
             v = package.find(Repository.versiontag)
             packagever = v.attrib['ver']
@@ -96,10 +82,10 @@ class Repository(repo.Repository):
             if pkgsource is None or pkgsource == '':
                 pkgsource = "-".join([packagename, packagever, packagerel]) \
                         + ".src.rpm"
-            if not packagename in self.packages:
-                self.packages[packagename] = []
+            if not packagename in packages:
+                packages[packagename] = []
             versionkey = (packagever, packagerel)
-            self.packages[packagename].append(repo.package.Metadata(
+            packages[packagename].append(repo.package.Metadata(
                 packagename,
                 packagever,
                 packagerel,
@@ -107,6 +93,66 @@ class Repository(repo.Repository):
                 packagearch,
                 pkgsource,
                 self.os))
+
+        return packages
+
+    def __parse_primary_db(self, dbpath):
+        packages = dict()
+        dbpath_uncompressed = dbpath.replace(".bz2","")
+        if (not os.path.exists(dbpath_uncompressed)) or \
+                os.path.getmtime(dbpath_uncompressed) <= \
+                os.path.getmtime(dbpath):
+            os.system('bzip2 -dc < "%s" > "%s"' % (dbpath, dbpath_uncompressed))
+        conn = sqlite3.connect(dbpath_uncompressed)
+        cur = conn.cursor()
+        c = cur.execute("select name, version, release, location_href, arch, rpm_sourcerpm from packages")
+        for name, ver, rel, href, arch, source in c:
+            packagename = str(name)
+            packagever = ver
+            packagerel = rel
+            packagehref = href
+            packagepath = os.path.join(self.repo_path, packagehref)
+            packagearch = arch
+            pkgsource = None
+            if source is not None:
+                pkgsource = source
+            if source is None or source == '':
+                pkgsource = "-".join([packagename, packagever, packagerel]) \
+                        + ".src.rpm"
+            if not packagename in packages:
+                packages[packagename] = []
+            versionkey = (packagever, packagerel)
+            packages[packagename].append(repo.package.Metadata(
+                packagename,
+                packagever,
+                packagerel,
+                packagepath,
+                packagearch,
+                pkgsource,
+                self.os))
+        conn.close()
+
+        return packages
+
+    def __init__(self, repo_top, osname, arch, xml=False):
+        super(Repository, self).__init__()
+        self.repo_path = os.path.join(repo_top, osname, arch)
+        self.dirty = False
+        self.os = osname
+
+        if not os.path.exists(self.repo_path):
+            os.makedirs(self.repo_path, 0775)
+
+        try:
+            primary_path = Repository.__get_primary_path(self.repo_path, xml)
+        except:
+            self.__createrepo()
+            primary_path = Repository.__get_primary_path(self.repo_path, xml)
+
+        if xml:
+            self.packages = self.__parse_primary_xml(primary_path)
+        else:
+            self.packages = self.__parse_primary_db(primary_path)
         for package in self.packages:
             self.packages[package].sort()
 
