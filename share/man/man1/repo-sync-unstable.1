@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: repo-sync-unstable
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 09/05/2014
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 09/08/2014
 .\"    Manual: Globus Toolkit Manual
 .\"    Source: globus-release-tools
 .\"  Language: English
 .\"
-.TH "REPO\-SYNC\-UNSTABLE" "1" "09/05/2014" "globus\-release\-tools" "Globus Toolkit Manual"
+.TH "REPO\-SYNC\-UNSTABLE" "1" "09/08/2014" "globus\-release\-tools" "Globus Toolkit Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -42,7 +42,7 @@ The \fBrepo\-sync\-unstable\fR program can either copy all newer (by version num
 .sp
 If a \fBPACKAGE\fR is specified in the command\-line options, then only that package and its subpackages (\-dev, \-doc, etc) are copied\&. Otherwise, all packages newer (by version number) than those in \fBROOT\fR are copied to the \fBunstable\fR release\&.
 .sp
-If the \fB\-i\fR (or \fB\-\-installers\-only\fR) parameter is used, only installers (source and binary) are copied, but the individual packages are not\&.
+If the \fB\-i\fR (or \fB\-\-installers\fR) parameter is used, only installers (source and binary) are copied, but the individual packages are not\&.
 .SH "OPTIONS"
 .PP
 \fB\-h, \-\-help\fR
@@ -65,7 +65,7 @@ Cache files in CACHE directory
 Only sync the latest version of PACKAGE
 .RE
 .PP
-\fB\-i, \-\-installers\-only\fR
+\fB\-i, \-\-installers\fR
 .RS 4
 Only sync installers, not packages
 .RE

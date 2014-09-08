@@ -29,7 +29,7 @@ depending on command-line options.
 If a *PACKAGE* is specified in the command-line options, then only that package
 and its subpackages (-dev, -doc, etc) are copied. Otherwise, all packages newer (by version number) than those in *ROOT* are copied to the *unstable* release.  
 
-If the *-i* (or *--installers-only*) parameter is used, only installers 
+If the *-i* (or *--installers*) parameter is used, only installers 
 (source and binary) are copied, but the individual packages are not.
 
 [[repo-sync-unstable-OPTIONS]]
@@ -43,7 +43,7 @@ OPTIONS
     Cache files in CACHE directory
 *-p PACKAGE, --package PACKAGE*::
     Only sync the latest version of PACKAGE
-*-i, --installers-only*::
+*-i, --installers*::
     Only sync installers, not packages
 *-d, --dryrun*::
     Display packages that would be copied, but don't actually execute the copy

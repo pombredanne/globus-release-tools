@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.8" />
+<meta name="generator" content="AsciiDoc 8.6.9" />
 <title>REPO-SYNC-UNSTABLE(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -94,7 +94,9 @@ ul > li > * { color: black; }
   padding: 0;
   margin: 0;
 }
-
+pre {
+  white-space: pre-wrap;
+}
 
 #author {
   color: #527bbd;
@@ -223,7 +225,7 @@ div.exampleblock > div.content {
 }
 
 div.imageblock div.content { padding-left: 0; }
-span.image img { border-style: none; }
+span.image img { border-style: none; vertical-align: text-bottom; }
 a.image:visited { color: white; }
 
 dl {
@@ -760,7 +762,7 @@ packages and installers, or copy only particular packages, or only installers,
 depending on command-line options.</p></div>
 <div class="paragraph"><p>If a <strong>PACKAGE</strong> is specified in the command-line options, then only that package
 and its subpackages (-dev, -doc, etc) are copied. Otherwise, all packages newer (by version number) than those in <strong>ROOT</strong> are copied to the <strong>unstable</strong> release.</p></div>
-<div class="paragraph"><p>If the <strong>-i</strong> (or <strong>--installers-only</strong>) parameter is used, only installers
+<div class="paragraph"><p>If the <strong>-i</strong> (or <strong>--installers</strong>) parameter is used, only installers
 (source and binary) are copied, but the individual packages are not.</p></div>
 </div>
 </div>
@@ -801,7 +803,7 @@ and its subpackages (-dev, -doc, etc) are copied. Otherwise, all packages newer 
 </p>
 </dd>
 <dt class="hdlist1">
-<strong>-i, --installers-only</strong>
+<strong>-i, --installers</strong>
 </dt>
 <dd>
 <p>
@@ -835,7 +837,7 @@ and its subpackages (-dev, -doc, etc) are copied. Otherwise, all packages newer 
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-09-04 16:17:50 CDT
+Last updated 2014-09-08 09:22:09 EDT
 </div>
 </div>
 </body>

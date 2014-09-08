@@ -34,8 +34,8 @@ parser.add_argument(
     "-p", "--package",
     help="Only sync the latest version of PACKAGE")
 parser.add_argument(
-    "-i", "--installers-only",
-    help="Only sync installers, not packages",
+    "-i", "--installers",
+    help="Sync installers, not packages",
     dest="installers_only",
     action="store_true")
 
@@ -63,7 +63,7 @@ if not args.installers_only:
         if args.dryrun:
             print "\n".join([(p.path + " to " + p.os) for p in packages])
 
-if args.package is None or args.installers_only:
+if args.installers_only:
     installers = repo.installers.Manager(cache_root=args.cache,
             root=args.root).promote_packages(dryrun=args.dryrun)
     if args.dryrun:
