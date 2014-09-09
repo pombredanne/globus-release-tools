@@ -139,9 +139,10 @@ class Repository(repo.Repository):
                     (datetime.datetime.now().strftime("%Y%m%d%H%M%S")))
             media_file.close()
         content_key_path = os.path.join(distro_repodir, "content.key")
-        content_key_file = file(content_key_path, "w")
-        content_key_file.write(repo.public_key)
-        content_key_file.close()
+        if not os.path.exists(content_key_path):
+            content_key_file = file(content_key_path, "w")
+            content_key_file.write(repo.public_key)
+            content_key_file.close()
 
         content_path = os.path.join(distro_repodir, "content")
         content_file = file(content_path, "w")
