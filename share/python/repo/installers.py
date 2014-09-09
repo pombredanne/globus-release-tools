@@ -94,7 +94,7 @@ class Cache(repo.Cache):
                     "artifacts/globus_toolkit*.pkg",
                     "artifacts/Globus*.tar.gz"
                 ],
-                r"(?P<name>[a-zA-Z_]*-(?P<version>([0-9.]|beta|rc)+))(-build(?P<release>[0-9]+))?"),
+                r"(?P<name>[a-zA-Z_]*-(?P<version>([0-9.]|beta|rc)+))(-build(?P<release>[0-9]+))?(\.pkg|\.tar\.gz)"),
             InstallerInfo(
                 "GT6-REPO-RPM",
                 'repo/rpm',
@@ -111,7 +111,7 @@ class Cache(repo.Cache):
                 "GT6-INSTALLER",
                 'src',
                 ["packaging/artifacts/*.tar.gz"],
-                r"(?P<name>[a-z_]*)-(?P<version>([0-9.]|beta|rc)*)"),
+                r"(?P<name>[a-z_]*)-(?P<version>([0-9.]|beta|rc)*)\.tar\.gz"),
             InstallerInfo(
                 "GT6-BINARIES-WIN32-CYGWIN",
                 'windows',
