@@ -101,7 +101,13 @@ class Repository(repo.Repository):
                 pkg_basename[0], package.source_name[:package.source_name.find("_")])
         dest_path = os.path.join(pkg_dest_dir, pkg_basename)
         if not os.path.exists(pkg_dest_dir):
-            os.makedirs(pkg_dest_dir, 0775)
+            os.makedirs(pkg_dest_dir)
+            if repo.gid is not None:
+                dirname = pkg_dest_dir
+                while dirname != self.repo_path:
+                    os.chown(dirname, repo.uid, repo.gid)
+                    os.chmod(dirname, 02775)
+                    dirname = os.path.dirname(dirname)
         if not os.path.exists(dest_path):
             oscmd = 'reprepro --silent -b %(repodir)s --export=never include %(codename)s %(pkgpath)s' % {
                         'repodir': self.repo_path,

@@ -142,6 +142,12 @@ class Repository(repo.Repository):
 
         if not os.path.exists(self.repo_path):
             os.makedirs(self.repo_path, 0775)
+            if repo.gid is not None:
+                dirname = self.repo_path
+                while dirname != repo_top:
+                    os.chown(dirname, repo.uid, repo.gid)
+                    os.chmod(dirname, 02775)
+                    dirname = os.path.dirname(dirname)
 
         try:
             primary_path = Repository.__get_primary_path(self.repo_path, xml)

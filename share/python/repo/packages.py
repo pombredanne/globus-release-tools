@@ -80,6 +80,9 @@ class Repository(repo.Repository):
 
             if not os.path.exists(distro_repodir):
                 os.makedirs(distro_repodir, 0755)
+                if repo.gid is not None:
+                    os.chown(distro_repodir, repo.uid, repo.gid)
+                    os.chmod(distro_repodir, 02775)
 
             for pkg in os.listdir(distro_repodir):
                 pkg_filename = os.path.join(distro_repodir, pkg)

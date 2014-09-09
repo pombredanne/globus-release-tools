@@ -43,7 +43,8 @@ EESufsL68kNlBuAAnRRI5jFAvyjtQaoQpVqSL4/O45D7AJ9WrW/vxTzN0OyZyUU6
 -----END PGP PUBLIC KEY BLOCK-----
 """
 
-
+uid = os.getuid()
+gid = None
 
 def _digest_file(filename, force=False):
     """
@@ -253,10 +254,16 @@ class Cache(object):
             source += self._cache_subdir + "/"
             dest += "/" + self._cache_subdir
         if not os.path.exists(dest):
-            os.makedirs(dest, 0775)
+            os.makedirs(dest)
+            dirname = dest
+            if gid is not None:
+                while dirname != self._cache_dir:
+                    os.chown(dirname, uid, gid)
+                    os.chmod(dirname, 02775)
+                    dirname = os.path.dirname(dirname)
         excludes = " ".join([("--exclude=" + ex) for ex in self._excludes])
 
-        os.system('rsync -a %s -e ssh "%s" "%s"' % (excludes, source, dest))
+        os.system('rsync -a --no-p --no-g --chmod=Du=rwx,Dg=rwxs,Do=rx --chmod=Fu=rw,Fg=rw,Fo=r %s -e ssh "%s" "%s"' % (excludes, source, dest))
 
     def get_operating_systems(self):
         return self._release.get_operating_systems()

@@ -1,9 +1,10 @@
 #! /usr/bin/python
 
-import os
-import sys
-
 import argparse
+import grp
+import os
+import socket
+import sys
 
 sys.path.append(os.path.join(
         os.path.dirname(sys.argv[0]),
@@ -17,6 +18,14 @@ import repo.packages
 import repo.installers
 import repo.yum
 import repo.zypper
+
+if socket.gethostname() == 'globuscvs':
+    gid = grp.getgrnam('globdev').gr_gid
+    if os.getgid() != gid:
+        print "Run newgrp globdev before running this script"
+        exit(1)
+    os.umask(02)
+    repo.gid = gid
 
 parser = argparse.ArgumentParser(
         description="Promote a package to a more stable release point")
@@ -74,3 +83,4 @@ for p in pdict:
     oslist = list(pdict[p])
     oslist.sort()
     print p, "[", ", ".join(oslist), "]"
+# vim: filetype=python:

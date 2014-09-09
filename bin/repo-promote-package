@@ -1,9 +1,12 @@
 #! /usr/bin/python
 
-import os
-import sys
-
 import argparse
+import datetime
+import grp
+import os
+import re
+import socket
+import sys
 
 sys.path.append(os.path.join(
         os.path.dirname(sys.argv[0]),
@@ -17,6 +20,14 @@ import repo.packages
 import repo.installers
 import repo.yum
 import repo.zypper
+
+if socket.gethostname() == 'globuscvs':
+    gid = grp.getgrnam('globdev').gr_gid
+    if os.getgid() != gid:
+        print "Run newgrp globdev before running this script"
+        exit(1)
+    os.umask(02)
+    repo.gid = gid
 
 parser = argparse.ArgumentParser(
         description="Promote a package to a more stable release point")
@@ -56,6 +67,7 @@ pkg_managers = [
 ]
 
 pdict = dict()
+advisories = {}
 for manager in pkg_managers:
     packages = manager.promote_packages(
             name=args.package, from_release=args.from_release,
@@ -67,6 +79,37 @@ for manager in pkg_managers:
             if pkey not in pdict:
                 pdict[pkey] = set()
             pdict[pkey].add(p.os)
+    if args.to_release == 'stable':
+        for p in packages:
+            if p.arch == 'src' and p.name not in advisories and \
+                    ".src.rpm" in p.path:
+                pfd = os.popen('rpm -q -p "%s" --changelog' % p.path)
+                dateline = pfd.readline()
+                changelog = ""
+                for l in pfd:
+                    if l.startswith("*"):
+                        break
+                    else:
+                        if l.startswith("- "):
+                            l = l.replace("- ", "", 1)
+                        changelog += l
+                pfd.close()
+                changelog = changelog.replace("\n"," ")
+                try:
+                    m = re.match(r"(.*) Globus Toolkit.*", dateline)
+                    if m is not None:
+                        add = datetime.datetime.strptime(m.group(1), "* %a %b %d %Y")
+                except:
+                    print "Can't parse " + dateline + " as a time"
+                    continue
+                pfd = os.popen('rpm -q -p "%s" -l' % p.path)
+                files = []
+                for l in pfd:
+                    if ".tar.gz" in l:
+                        files.append(l.strip())
+                pfd.close()
+                if len(files) > 0:
+                    advisories[p.name] = "%04d-%02d-%02d;%s;6.0;bug;%s\n" % (add.year, add.month, add.day, ",".join(files), changelog)
 
 if args.dryrun:
     for p in pdict:
@@ -78,4 +121,16 @@ if args.package is None:
             to_release=args.to_release, dryrun=args.dryrun)
     if args.dryrun:
         print "\n".join([(os.path.basename(p.path) + " to " + p.os) for p in installers])
+
+if args.to_release == 'stable':
+    sorted_advisories = [advisories[a] for a in advisories]
+    sorted_advisories.sort()
+    if args.dryrun:
+        for a in sorted_advisories:
+            print a
+    else:
+        f = open("/mcs/globus.org/toolkit/advisories.txt", "a")
+        for a in sorted_advisories:
+            f.write(a)
+        f.close()
 

@@ -131,6 +131,12 @@ class Repository(repo.Repository):
         for dirname in [(os.path.join(distro_repodir, x)) for x in dirs]:
             if not os.path.exists(dirname):
                 os.makedirs(dirname, 0775)
+                if repo.gid is not None:
+                    chgrp_dirname = dirname
+                    while chgrp_dirname != distro_repodir:
+                        os.chown(chgrp_dirname, repo.uid, repo.gid)
+                        os.chmod(chgrp_dirname, 02775)
+                        chgrp_dirname = os.path.dirname(chgrp_dirname)
         media_path = os.path.join(distro_repodir, "media.1", "media")
 
         if not os.path.exists(media_path):

@@ -142,6 +142,12 @@ class Cache(repo.Cache):
             i_cache_dir = os.path.join(self.cache_dir, i.subdir)
             if not os.path.exists(i_cache_dir):
                 os.makedirs(i_cache_dir, 0775)
+                if repo.gid is not None:
+                    dirname = i_cache_dir
+                    while dirname != self.cache_dir:
+                        os.chown(dirname, repo.uid, repo.gid)
+                        os.chmod(dirname, 02775)
+                        dirname = os.path.dirname(dirname)
             urls = self._fetch_artifact_list(i)
             for u in urls:
                 self._fetch_url(u, i_cache_dir)
