@@ -21,14 +21,6 @@ import repo.installers
 import repo.yum
 import repo.zypper
 
-if socket.gethostname() == 'globuscvs':
-    gid = grp.getgrnam('globdev').gr_gid
-    if os.getgid() != gid:
-        print "Run newgrp globdev before running this script"
-        exit(1)
-    os.umask(02)
-    repo.gid = gid
-
 parser = argparse.ArgumentParser(
         description="Promote a package to a more stable release point")
 parser.add_argument(
@@ -55,8 +47,23 @@ parser.add_argument(
     "-d", "--dryrun",
     help="Display packages that would be copied, but don't actually execute the copy",
     action='store_true')
+parser.add_argument(
+    "-a", "--advisory",
+    help="Add new package changelogs to the ADVISORY file",
+    default=None)
 
 args = parser.parse_args()
+if args.to_release != 'stable' and args.advisory is not None:
+    print "Not promoting packages to stable, ignoring ADVISORY update"
+
+if socket.gethostname() == 'globuscvs':
+    gid = grp.getgrnam('globdev').gr_gid
+    if os.getgid() != gid:
+        print "Run newgrp globdev before running this script"
+        exit(1)
+    os.umask(02)
+    repo.gid = gid
+
 
 releases = [args.from_release, args.to_release]
 
@@ -122,14 +129,14 @@ if args.package is None:
     if args.dryrun:
         print "\n".join([(os.path.basename(p.path) + " to " + p.os) for p in installers])
 
-if args.to_release == 'stable':
+if args.to_release == 'stable' and args.advisory is not None:
     sorted_advisories = [advisories[a] for a in advisories]
     sorted_advisories.sort()
     if args.dryrun:
         for a in sorted_advisories:
             print a
     else:
-        f = open("/mcs/globus.org/toolkit/advisories.txt", "a")
+        f = open(args.advisory, "a")
         for a in sorted_advisories:
             f.write(a)
         f.close()

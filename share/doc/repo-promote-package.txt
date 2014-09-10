@@ -41,6 +41,9 @@ OPTIONS
     Copy packages to the RELEASE (testing or stable)
 *-d, --dryrun*::
     Display packages that would be copied, but don't actually execute the copy
+*-a ADVISORY, --advisory ADVISORY*::
+    Add new package changelogs to the ADVISORY file. This is ignored if
+    the "to" RELEASE is not 'stable'.
 
 [[repo-promote-package-SEEALSO]]
 SEE ALSO

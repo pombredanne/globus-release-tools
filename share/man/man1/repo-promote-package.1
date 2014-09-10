@@ -2,12 +2,12 @@
 .\"     Title: repo-promote-package
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 09/05/2014
+.\"      Date: 09/10/2014
 .\"    Manual: Globus Toolkit Manual
 .\"    Source: globus-release-tools
 .\"  Language: English
 .\"
-.TH "REPO\-PROMOTE\-PACKA" "1" "09/05/2014" "globus\-release\-tools" "Globus Toolkit Manual"
+.TH "REPO\-PROMOTE\-PACKA" "1" "09/10/2014" "globus\-release\-tools" "Globus Toolkit Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -72,6 +72,12 @@ Copy packages to the RELEASE (testing or stable)
 \fB\-d, \-\-dryrun\fR
 .RS 4
 Display packages that would be copied, but don\(cqt actually execute the copy
+.RE
+.PP
+\fB\-a ADVISORY, \-\-advisory ADVISORY\fR
+.RS 4
+Add new package changelogs to the ADVISORY file\&. This is ignored if the "to" RELEASE is not
+\fIstable\fR\&.
 .RE
 .SH "SEE ALSO"
 .sp
