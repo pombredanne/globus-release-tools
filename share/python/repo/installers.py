@@ -99,13 +99,13 @@ class Cache(repo.Cache):
                 "GT6-REPO-RPM",
                 'repo/rpm',
                 [ "artifacts/*.noarch.rpm" ],
-                r"(?P<name>[a-z-]*[a-z]-(?P<version>[0-9.]))-(?P<release>[0-9.])",
+                r"(?P<name>[a-z-]*[a-z]-(?P<version>[0-9.]*[0-9]))-(?P<release>[0-9]+).*\.noarch\.rpm$",
                 link="../globus-toolkit-repo-latest.noarch.rpm"),
             InstallerInfo(
                 'GT6-REPO-DEB',
                 "repo/deb",
                 [ "artifacts/*_all.deb" ],
-                r"(?P<name>[a-z-]*[a-z]_(?P<version>[0-9.]+))-(?P<release>[0-9.])",
+                r"(?P<name>[a-z-]*[a-z]_(?P<version>[0-9.]+))-(?P<release>[0-9]+)",
                 link="../globus-toolkit-repo_latest_all.deb"),
             InstallerInfo(
                 "GT6-INSTALLER",

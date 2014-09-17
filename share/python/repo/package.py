@@ -20,7 +20,7 @@ class Version(object):
 
     def __lt__(self, other):
         return (self.version < other.version) or \
-            ((self.version == other.version) and (self.release < other.release))
+            ((self.version == other.version) and repo.versioncompare.ReleaseGreater(other.release, self.release))
         
     def __le__(self, other):
         return (self < other) or (self == other)
@@ -35,7 +35,7 @@ class Version(object):
 
     def __gt__(self, other):
         return (self.version > other.version) or \
-            ((self.version == other.version) and (self.release > other.release))
+            ((self.version == other.version) and repo.versioncompare.ReleaseGreater(self.release, other.release))
 
     def __ge__(self, other):
         return (self > other) or (self == other)
