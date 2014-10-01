@@ -101,7 +101,7 @@ for manager in pkg_managers:
                             l = l.replace("- ", "", 1)
                         changelog += l
                 pfd.close()
-                changelog = changelog.replace("\n"," ")
+                changelog = changelog.strip().replace("\n","<br />")
                 try:
                     m = re.match(r"(.*) Globus Toolkit.*", dateline)
                     if m is not None:
