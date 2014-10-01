@@ -53,8 +53,6 @@ parser.add_argument(
     default=None)
 
 args = parser.parse_args()
-if args.to_release != 'stable' and args.advisory is not None:
-    print "Not promoting packages to stable, ignoring ADVISORY update"
 
 if socket.gethostname() == 'globuscvs':
     gid = grp.getgrnam('globdev').gr_gid
@@ -75,6 +73,8 @@ pkg_managers = [
 
 pdict = dict()
 advisories = {}
+today = datetime.datetime.now().strftime("%Y-%m-%d")
+
 for manager in pkg_managers:
     packages = manager.promote_packages(
             name=args.package, from_release=args.from_release,
@@ -86,7 +86,7 @@ for manager in pkg_managers:
             if pkey not in pdict:
                 pdict[pkey] = set()
             pdict[pkey].add(p.os)
-    if args.to_release == 'stable':
+    if args.advisory is not None:
         for p in packages:
             if p.arch == 'src' and p.name not in advisories and \
                     ".src.rpm" in p.path:
@@ -102,13 +102,6 @@ for manager in pkg_managers:
                         changelog += l
                 pfd.close()
                 changelog = changelog.strip().replace("\n","<br />")
-                try:
-                    m = re.match(r"(.*) Globus Toolkit.*", dateline)
-                    if m is not None:
-                        add = datetime.datetime.strptime(m.group(1), "* %a %b %d %Y")
-                except:
-                    print "Can't parse " + dateline + " as a time"
-                    continue
                 pfd = os.popen('rpm -q -p "%s" -l' % p.path)
                 files = []
                 for l in pfd:
@@ -116,7 +109,7 @@ for manager in pkg_managers:
                         files.append(l.strip())
                 pfd.close()
                 if len(files) > 0:
-                    advisories[p.name] = "%04d-%02d-%02d;%s;6.0;bug;%s\n" % (add.year, add.month, add.day, ",".join(files), changelog)
+                    advisories[p.name] = "%s;%s;6.0;bug;%s\n" % (today, ",".join(files), changelog)
 
 if args.dryrun:
     for p in pdict:
@@ -129,12 +122,12 @@ if args.package is None:
     if args.dryrun:
         print "\n".join([(os.path.basename(p.path) + " to " + p.os) for p in installers])
 
-if args.to_release == 'stable' and args.advisory is not None:
+if args.advisory is not None:
     sorted_advisories = [advisories[a] for a in advisories]
     sorted_advisories.sort()
-    if args.dryrun:
+    if args.dryrun or args.advisory == '-':
         for a in sorted_advisories:
-            print a
+            print a,
     else:
         f = open(args.advisory, "a")
         for a in sorted_advisories:
