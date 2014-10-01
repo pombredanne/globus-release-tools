@@ -177,7 +177,7 @@ DebIndices: Packages Release . .gz .bz2
 DscIndices: Sources Release .gz .bz2
 Contents: . .gz .bz2
 SignWith: yes
-Tracking: minimal includechanges
+Tracking: keep includechanges
 Description: Globus Toolkit Packages
 """ % (distro)
         f = None
