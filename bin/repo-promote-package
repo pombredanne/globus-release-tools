@@ -106,7 +106,12 @@ for manager in pkg_managers:
                 files = []
                 for l in pfd:
                     if ".tar.gz" in l:
-                        files.append(l.strip())
+                        l = l.replace(".tar.gz", "").strip()
+                        matches = re.match(l, r"([a-z-]+)(-[0-9.]+)")
+                        if matches is not None:
+                            l = matches.group(1).replace("-", "_") + \
+                                matches.group(2)
+                        files.append(l.replace(".tar.gz", "").strip())
                 pfd.close()
                 if len(files) > 0:
                     advisories[p.name] = "%s;%s;6.0;bug;%s\n" % (today, ",".join(files), changelog)
