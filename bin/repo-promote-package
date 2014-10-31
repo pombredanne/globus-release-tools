@@ -62,20 +62,35 @@ if socket.gethostname() == 'globuscvs':
     os.umask(02)
     repo.gid = gid
 
+repo.setup_gpg_agent()
 
 releases = [args.from_release, args.to_release]
 
-pkg_managers = [
-    repo.deb.Manager(root=args.root, releases=releases, use_cache=False),
-    repo.yum.Manager(root=args.root, releases=releases, use_cache=False),
+print "===================="
+print "Parsing repositories"
+print "===================="
+
+pkg_managers = dict()
+print "Parsing deb"
+pkg_managers['deb'] = \
+    repo.deb.Manager(root=args.root, releases=releases, use_cache=False)
+print "Parsing yum"
+pkg_managers['yum'] = \
+    repo.yum.Manager(root=args.root, releases=releases, use_cache=False)
+print "Parsing zypper"
+pkg_managers['zypper'] = \
     repo.zypper.Manager(root=args.root, releases=releases, use_cache=False)
-]
 
 pdict = dict()
 advisories = {}
 today = datetime.datetime.now().strftime("%Y-%m-%d")
 
-for manager in pkg_managers:
+print "=================="
+print "Promoting packages"
+print "=================="
+for man in pkg_managers:
+    print "Promoting %s packages" % man
+    manager = pkg_managers[man]
     packages = manager.promote_packages(
             name=args.package, from_release=args.from_release,
             to_release=args.to_release, dryrun=args.dryrun)
@@ -117,14 +132,27 @@ for manager in pkg_managers:
                     advisories[p.name] = "%s;%s;6.0;bug;%s\n" % (today, ",".join(files), changelog)
 
 if args.dryrun:
+    print "===================="
+    print "Promotion candidates"
+    print "===================="
     for p in pdict:
         print p, "to [", ", ".join(pdict[p]), "]"
 
 if args.package is None:
-    installers = repo.installers.Manager(
-            root=args.root).promote_packages(from_release=args.from_release,
+    print "============================="
+    print "Parsing installers repository"
+    print "============================="
+    manager = repo.installers.Manager(
+            root=args.root)
+    print "===================="
+    print "Promoting installers"
+    print "===================="
+    installers = manager.promote_packages(from_release=args.from_release,
             to_release=args.to_release, dryrun=args.dryrun)
     if args.dryrun:
+        print "===================="
+        print "Promotion candidates"
+        print "===================="
         print "\n".join([(os.path.basename(p.path) + " to " + p.os) for p in installers])
 
 if args.advisory is not None:

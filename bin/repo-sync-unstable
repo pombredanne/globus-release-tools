@@ -19,14 +19,6 @@ import repo.installers
 import repo.yum
 import repo.zypper
 
-if socket.gethostname() == 'globuscvs':
-    gid = grp.getgrnam('globdev').gr_gid
-    if os.getgid() != gid:
-        print "Run newgrp globdev before running this script"
-        exit(1)
-    os.umask(02)
-    repo.gid = gid
-
 parser = argparse.ArgumentParser(
         description="Add the newest packages from builds.globus.org to the unstable release")
 parser.add_argument(
@@ -55,26 +47,55 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+if socket.gethostname() == 'globuscvs':
+    gid = grp.getgrnam('globdev').gr_gid
+    if os.getgid() != gid:
+        print "Run newgrp globdev before running this script"
+        exit(1)
+    os.umask(02)
+    repo.gid = gid
+
+repo.setup_gpg_agent()
+
 # Here we don't restrict the releases to ["unstable"], as we want at least
 # an empty repository in "testing" and "stable" for each operating system
 # we support so that the repo package doesn't complain about missing files
 if not args.installers_only:
-    pkg_managers = [
-        repo.deb.Manager(cache_root=args.cache, root=args.root),
-        repo.yum.Manager(cache_root=args.cache, root=args.root),
-        repo.packages.Manager(cache_root=args.cache, root=args.root),
-        repo.zypper.Manager(cache_root=args.cache, root=args.root)
-    ]
+    print "=========================================="
+    print "Caching changes from builds.globus.org...."
+    print "=========================================="
+    managers = dict()
+    print "Updating deb cache"
+    managers['deb'] = repo.deb.Manager(cache_root=args.cache, root=args.root)
 
-    for manager in pkg_managers:
+    print "Updating yum cache"
+    managers['yum'] = repo.yum.Manager(cache_root=args.cache, root=args.root)
+    print "Updating packages cache"
+    managers['packages'] = repo.packages.Manager(cache_root=args.cache, root=args.root)
+    print "Updating zypper cache"
+    managers['zypper'] = repo.zypper.Manager(cache_root=args.cache, root=args.root)
+
+    print "========================"
+    print "Updating repositories..."
+    print "========================"
+    for man in managers:
+        print "Updating %s repo" % man
+        manager = managers[man]
         packages = manager.promote_packages(name=args.package, dryrun=args.dryrun)
 
         if args.dryrun:
             print "\n".join([(p.path + " to " + p.os) for p in packages])
 
 if args.installers_only:
-    installers = repo.installers.Manager(cache_root=args.cache,
-            root=args.root).promote_packages(dryrun=args.dryrun)
+    print "=================================="
+    print "Syncing with builds.globus.org...."
+    print "=================================="
+    manager = repo.installers.Manager(cache_root=args.cache,
+            root=args.root)
+    print "========================"
+    print "Updating installers repo"
+    print "========================"
+    installers = manager.promote_packages(dryrun=args.dryrun)
     if args.dryrun:
         print "\n".join([(p.path + " to " + p.os) for p in installers])
 # vim: filetype=python:
