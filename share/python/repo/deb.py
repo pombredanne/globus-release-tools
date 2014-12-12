@@ -25,7 +25,7 @@ class Repository(repo.Repository):
 
     changes_fields = ["Format", "Date", "Source", "Binary", "Architecture", "Version", "Distribution", "Urgency", "Maintainer", "Changed-By", "Description", "Changes", "Checksums-Sha1", "Checksums-Sha256", "Files"]
 
-    changes_re = re.compile(r"-----BEGIN PGP SIGNED MESSAGE-----\nHash: .*\n\n(" + "|".join([ r"%s: (?P<%s>.*\n(( .+\n)*\n)?)" % ( field, field.replace("-", "") )  for field in changes_fields])+")*")
+    changes_re = re.compile(r"-----BEGIN PGP SIGNED MESSAGE-----\nHash: .*\n\n(" + "|".join([ r"%s: (?P<%s>.*\n(( [^ ]+\n)*\n)?)" % ( field, field.replace("-", "") )  for field in changes_fields])+")*")
 
     def __init__(self, repo_path, codename, arch):
         super(Repository, self).__init__()

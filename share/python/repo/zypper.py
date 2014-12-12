@@ -176,11 +176,13 @@ DATADIR RPMS
             entry_file = file(os.path.join(descr_dir, entry), "r")
             entry_sha1 = hashlib.sha1()
             entry_sha1.update(entry_file.read())
-            content_file.write("META SHA1 %s\n" %(entry_sha1.hexdigest()))
+            content_file.write("META SHA1 %s  %s\n" % (
+                entry_sha1.hexdigest(), entry))
 
         key_sha1 = hashlib.sha1()
         key_sha1.update(repo.public_key)
-        content_file.write("KEY SHA1 %s\n" % (key_sha1.hexdigest()))
+        content_file.write("KEY SHA1 %s  %s\n" % (
+                key_sha1.hexdigest(), "content.key"))
 
         content_asc = os.path.join(distro_repodir, "content.asc")
         if os.path.exists(content_asc):
