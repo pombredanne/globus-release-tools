@@ -44,6 +44,11 @@ parser.add_argument(
     dest="to_release",
     default="testing")
 parser.add_argument(
+    "-o", "--os-name",
+    help="Only process packages related to the OS_NAME. The name should be of the form os/release for an RPM distro (e.g. el/5 or sles/11) or a codename for a Deb distro (e.g. wheezy)",
+    dest="os_name",
+    default=None)
+parser.add_argument(
     "-d", "--dryrun",
     help="Display packages that would be copied, but don't actually execute the copy",
     action='store_true')
@@ -53,6 +58,8 @@ parser.add_argument(
     default=None)
 
 args = parser.parse_args()
+if os_name is not None:
+    os_name = [os_name]
 
 if socket.gethostname() == 'globuscvs':
     gid = grp.getgrnam('globdev').gr_gid
@@ -73,13 +80,13 @@ print "===================="
 pkg_managers = dict()
 print "Parsing deb"
 pkg_managers['deb'] = \
-    repo.deb.Manager(root=args.root, releases=releases, use_cache=False)
+    repo.deb.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name)
 print "Parsing yum"
 pkg_managers['yum'] = \
-    repo.yum.Manager(root=args.root, releases=releases, use_cache=False)
+    repo.yum.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name)
 print "Parsing zypper"
 pkg_managers['zypper'] = \
-    repo.zypper.Manager(root=args.root, releases=releases, use_cache=False)
+    repo.zypper.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name)
 
 pdict = dict()
 advisories = {}

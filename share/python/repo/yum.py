@@ -277,7 +277,7 @@ class Manager(repo.Manager):
     promoted to any of the released package trees via methods in this class
     """
     def __init__(self, cache_root=repo.default_cache, root=repo.default_root,
-            releases=repo.default_releases, use_cache=True):
+            releases=repo.default_releases, use_cache=True, os_names=None):
         """
         Constructor
         -----------
@@ -293,6 +293,9 @@ class Manager(repo.Manager):
             Names of the releases within the release trees
         *use_cache*::
             (Optional) Parse packages in the cache
+        *os_names*::
+            (Optional) List of operating system name/version (e.g. el/7) to
+            manage. If None, then all yum-based OSes will be managed.
         """
         if use_cache:
             cache = Cache(cache_root) if use_cache else None
@@ -301,6 +304,12 @@ class Manager(repo.Manager):
         else:
             cache = None
             oses = Manager.find_operating_systems(root, releases[0])
+        if os_names is not None:
+            oses = {
+                osname: osarch
+                for osname, osarch in oses
+                if osname in os_names
+            } 
 
         yum_releases = {}
         for release in releases:
