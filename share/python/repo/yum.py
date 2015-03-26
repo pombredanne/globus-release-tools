@@ -306,8 +306,8 @@ class Manager(repo.Manager):
             oses = Manager.find_operating_systems(root, releases[0])
         if os_names is not None:
             oses = {
-                osname: osarch
-                for osname, osarch in oses
+                osname: oses[osname]
+                for osname in oses
                 if osname in os_names
             } 
 

@@ -58,8 +58,9 @@ parser.add_argument(
     default=None)
 
 args = parser.parse_args()
-if os_name is not None:
-    os_name = [os_name]
+os_name = None
+if args.os_name is not None:
+    os_name = [args.os_name]
 
 if socket.gethostname() == 'globuscvs':
     gid = grp.getgrnam('globdev').gr_gid
