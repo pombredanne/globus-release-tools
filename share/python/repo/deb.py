@@ -54,7 +54,7 @@ class Repository(repo.Repository):
                         src = changes.group('Source').strip() + "_" + \
                                 changes.group("Version")
 
-                        if arch in changes.group('Architecture').strip().split(" "):
+                        if arch in changes.group('Architecture').strip().split(" ") or changes.group('Architecture').strip() == 'all':
                             if arch == 'source':
                                 name = changes.group('Source').strip()
                                 pkg = repo.package.Metadata(
