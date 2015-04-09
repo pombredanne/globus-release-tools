@@ -152,15 +152,16 @@ if args.package is None:
     print "============================="
     manager = repo.installers.Manager(
             root=args.root)
-    print "===================="
-    print "Promoting installers"
-    print "===================="
+    if not args.dryrun:
+        print "===================="
+        print "Promoting installers"
+        print "===================="
     installers = manager.promote_packages(from_release=args.from_release,
             to_release=args.to_release, dryrun=args.dryrun)
-    if args.dryrun:
-        print "===================="
-        print "Promotion candidates"
-        print "===================="
+    if args.dryrun and len(installers) > 0:
+        print "=============================="
+        print "Installer Promotion candidates"
+        print "=============================="
         print "\n".join([(os.path.basename(p.path) + " to " + p.os) for p in installers])
 
 if args.advisory is not None:

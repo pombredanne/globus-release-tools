@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: repo-promote-package
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 09/10/2014
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 04/09/2015
 .\"    Manual: Globus Toolkit Manual
 .\"    Source: globus-release-tools
 .\"  Language: English
 .\"
-.TH "REPO\-PROMOTE\-PACKA" "1" "09/10/2014" "globus\-release\-tools" "Globus Toolkit Manual"
+.TH "REPO\-PROMOTE\-PACKA" "1" "04/09/2015" "globus\-release\-tools" "Globus Toolkit Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -77,11 +77,11 @@ Display packages that would be copied, but don\(cqt actually execute the copy
 \fB\-a ADVISORY, \-\-advisory ADVISORY\fR
 .RS 4
 Add new package changelogs to the ADVISORY file\&. This is ignored if the "to" RELEASE is not
-\fIstable\fR\&.
+\fIstable\fR\&. If the ADVISORY parameter is "\-", or this is a dryrun, the advisory text is printed to standard output\&.
 .RE
 .SH "SEE ALSO"
 .sp
 repo\-sync\-unstable(1)
 .SH "AUTHOR"
 .sp
-Copyright \(co 2014 University of Chicago
+Copyright \(co 2014\-2015 University of Chicago
