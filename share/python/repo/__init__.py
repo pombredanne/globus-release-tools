@@ -51,7 +51,7 @@ gid = None
 
 def _digest_file(filename, force=False):
     """
-    Compute the md5 and sha1 hashes of a file and write them to disk.
+    Compute the md5, sha1, sha512 hashes of a file and write them to disk.
 
     Parameters
     ----------
@@ -61,10 +61,11 @@ def _digest_file(filename, force=False):
         Overwrite existing hash file (bool [False])
     """
     if fnmatch.fnmatch(filename, "*.md5") or \
-            fnmatch.fnmatch(filename, "*.sha1"):
+            fnmatch.fnmatch(filename, "*.sha1") or \
+            fnmatch.fnmatch(filename, "*.sha512"):
         return
 
-    for h in ['md5', 'sha1']:
+    for h in ['md5', 'sha1', 'sha512']:
         hashname = filename + "." + h
         if force or not os.path.exists(hashname):
             digester = hashlib.new(h)
