@@ -13,24 +13,30 @@ class FileInfo(object):
         self.inode = stat.st_ino
         self.size = stat.st_size
         self._sha1sum = None
-        self._data = None
+        self._md5sum = None
 
     def _checksums(self):
-        if self._data is None:
-            f = file(self.path, "r")
-            data = f.read()
-            f.close()
-        else:
-            data = self._data
+        f = file(self.path, "r")
+        data = f.read()
+        f.close()
         sha1 = hashlib.sha1()
         sha1.update(data)
         self._sha1sum = sha1.digest()
+        md5 = hashlib.md5()
+        md5.update(data)
+        self._md5sum = md5.digest()
 
     @property
     def sha1sum(self):
         if self._sha1sum is None:
             self._checksums()
         return self._sha1sum
+
+    @property
+    def md5sum(self):
+        if self._md5sum is None:
+            self._checksums()
+        return self._md5sum
 
     def __eq__(self, other):
         if self.dev == other.dev and self.inode == other.inode:
@@ -41,17 +47,15 @@ class FileInfo(object):
             return False
         if self.sha1sum != other.sha1sum:
             return False
+        if self.md5sum != other.md5sum:
+            return False
         else:
-            if self._data is None:
-                f1 = file(self.path, "r")
-                self._data = f1.read()
-                f1.close()
-            d1 = self._data
-            if other._data is None:
-                f2 = file(other.path, "r")
-                other._data = f2.read()
-                f2.close()
-            d2 = other._data
+            f1 = file(self.path, "r")
+            d1 = f1.read()
+            f1.close()
+            f2 = file(other.path, "r")
+            d2 = f2.read()
+            f2.close()
             return d1 == d2
 
 def main():
