@@ -255,7 +255,8 @@ class Manager(repo.Manager):
     promoted to any of the released package trees via methods in this class
     """
     def __init__(self, cache_root=repo.default_cache, root=repo.default_root,
-            releases=repo.default_releases, use_cache=True, os_names=None):
+            releases=repo.default_releases, use_cache=True, os_names=None,
+            exclude_os_names=None):
         """
         Constructor
         -----------
@@ -274,6 +275,10 @@ class Manager(repo.Manager):
         *os_names*::
             (Optional) List of operating system codenames (e.g. wheezy) to
             manage. If None, then all debian-based OSes will be managed.
+        *exclude_os_names*::
+            (Optional) List of operating system codenames (e.g. wheezy) to
+            skip. If None, then all debian-based OSes will be managed. This is
+            evaluated after os_names
         """
         deb_releases = {}
 
@@ -286,7 +291,8 @@ class Manager(repo.Manager):
 
         if os_names is not None:
             codenames = [cn for cn in codenames if cn in os_names]
-
+        if exclude_os_names is not None:
+            codenames = [cn for cn in codenames if cn not in exclude_os_names]
         for release in releases:
             deb_releases[release] = Release(
                     release,

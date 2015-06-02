@@ -252,7 +252,8 @@ class Manager(repo.Manager):
     promoted to any of the released package trees via methods in this class
     """
     def __init__(self, cache_root=repo.default_cache, root=repo.default_root,
-            releases=repo.default_releases, use_cache=True, os_names=None):
+            releases=repo.default_releases, use_cache=True, os_names=None,
+            exclude_os_names=None):
         """
         Constructor
         -----------
@@ -269,8 +270,12 @@ class Manager(repo.Manager):
         *use_cache*::
             (Optional) Parse packages in the cache
         *os_names*::
-            (Optional) List of operating system name/version (e.g. slez/11) to
+            (Optional) List of operating system name/version (e.g. sles/11) to
             manage. If None, then all zypper-based OSes will be managed.
+        *exclude_os_names*::
+            (Optional) List of operating system name/version (e.g. sles/11) to
+            skip. If None, then all zypper-based OSes will be managed. This is
+            evaluated after os_names
         """
         if use_cache:
             cache = Cache(cache_root) if use_cache else None
@@ -281,7 +286,8 @@ class Manager(repo.Manager):
 
         if os_names is not None:
             oses = [osname for osname in oses if osname in os_names]
-
+        if exclude_os_names is not None:
+            oses = [osname for osname in oses if osname not in exclude_os_names]
         zypper_releases = {}
         for release in releases:
             zypper_releases[release] = Release(

@@ -21,7 +21,9 @@ default_yum_repos = {
             "el/6": ["i386", "SRPMS", "x86_64"],
             "el/7": ["SRPMS", "x86_64"],
             "fedora/19":  ["i386", "SRPMS", "x86_64"],
-            "fedora/20":  ["i386", "SRPMS", "x86_64"]
+            "fedora/20":  ["i386", "SRPMS", "x86_64"],
+            "fedora/21":  ["i386", "SRPMS", "x86_64"],
+            "fedora/22":  ["i386", "SRPMS", "x86_64"]
 }
 
 
@@ -277,7 +279,8 @@ class Manager(repo.Manager):
     promoted to any of the released package trees via methods in this class
     """
     def __init__(self, cache_root=repo.default_cache, root=repo.default_root,
-            releases=repo.default_releases, use_cache=True, os_names=None):
+            releases=repo.default_releases, use_cache=True, os_names=None,
+            exclude_os_names=None):
         """
         Constructor
         -----------
@@ -296,6 +299,10 @@ class Manager(repo.Manager):
         *os_names*::
             (Optional) List of operating system name/version (e.g. el/7) to
             manage. If None, then all yum-based OSes will be managed.
+        *exclude_os_names*::
+            (Optional) List of operating system name/version (e.g. el/7) to
+            skip. If None, then all yum-based OSes will be managed. This is
+            evaluated after os_names
         """
         if use_cache:
             cache = Cache(cache_root) if use_cache else None
@@ -310,7 +317,12 @@ class Manager(repo.Manager):
                 for osname in oses
                 if osname in os_names
             } 
-
+        if exclude_os_names is not None:
+            oses = {
+                osname: oses[osname]
+                for osname in oses 
+                if osname not in exclude_os_names
+            }
         yum_releases = {}
         for release in releases:
             yum_releases[release] = Release(
