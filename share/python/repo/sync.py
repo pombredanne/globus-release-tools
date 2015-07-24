@@ -98,8 +98,11 @@ def sync_tree(root=default_root, cache=default_cache):
                 if not os.path.exists(destfn):
                     srcfn = os.path.join(cache, "packages", fn)
                     shutil.copy(srcfn, destfn)
-                for ext in ['.md5', '.sha1', '.sha512']:
-                    srchash = srcfn + ext
-                    if os.path.exists(srcfn + ext):
-                        desthash = destfn + ext
-                        shutil.copy(srchash, desthash)
+                if not(fnmatch.fnmatch(fn, "*.md5") or
+                       fnmatch.fnmatch(fn, "*.sha1") or
+                       fnmatch.fnmatch(fn, "*.sha512")):
+                    for ext in ['.md5', '.sha1', '.sha512']:
+                        srchash = srcfn + ext
+                        if os.path.exists(srcfn + ext):
+                            desthash = destfn + ext
+                            shutil.copy(srchash, desthash)
