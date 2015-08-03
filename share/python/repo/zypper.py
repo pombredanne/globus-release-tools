@@ -183,6 +183,7 @@ DATADIR RPMS
         key_sha1.update(repo.public_key)
         content_file.write("KEY SHA1 %s  %s\n" % (
                 key_sha1.hexdigest(), "content.key"))
+        content_file.close()
 
         content_asc = os.path.join(distro_repodir, "content.asc")
         if os.path.exists(content_asc):
