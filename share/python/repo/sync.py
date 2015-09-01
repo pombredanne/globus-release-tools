@@ -1,4 +1,20 @@
+# Copyright 2014-2015 University of Chicago
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 #! /usr/bin/python
+
+from __future__ import print_function
 
 import fnmatch
 import os
@@ -32,7 +48,7 @@ def update_deb_dest(root=default_root, cache=default_cache):
             os.walk(os.path.join(cache, "deb", "pool")):
         for fn in filenames:
             if fnmatch.fnmatch(fn, "*.changes"):
-                print fn
+                print(fn)
                 abspath = os.path.join(dirpath, fn)
                 relpath = abspath[len(cache)+1:]
                 destpath = os.path.join(root, "unstable", relpath)
@@ -66,15 +82,15 @@ def update_yum_dest(root=default_root, cache=default_cache):
             for archdir in os.listdir(os.path.join(cache, 'rpm', osnamever)):
                 yum_repos[osnamever].append(archdir)
 
-    print yum_repos
+    print(yum_repos)
     repo.tree.yum.repo_tree_create_yum(root, yum_repos=yum_repos)
     # Copy the packages from the repos here to the destination
-    for repo in yum_repos.keys():
+    for repo in list(yum_repos.keys()):
         for archrepo in yum_repos[repo]:
             src_repodir = os.path.join(cache, "rpm", archrepo)
             dest_repodir = os.path.join(root, "unstable", "rpm", archrepo)
             changes = False
-            print "Searching " + src_repodir
+            print("Searching " + src_repodir)
             for cached_rpm in os.listdir(src_repodir):
                 if fnmatch.fnmatch(cached_rpm, "*.rpm"):
                     cached_rpm_path = os.path.join(src_repodir, cached_rpm)

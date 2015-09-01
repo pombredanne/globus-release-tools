@@ -1,5 +1,21 @@
 #! /usr/bin/python
 
+# Copyright 2014-2015 University of Chicago
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from __future__ import print_function
+
 import argparse
 import grp
 import os
@@ -22,9 +38,9 @@ import repo.zypper
 if socket.gethostname() == 'globuscvs':
     gid = grp.getgrnam('globdev').gr_gid
     if os.getgid() != gid:
-        print "Run newgrp globdev before running this script"
+        print("Run newgrp globdev before running this script")
         exit(1)
-    os.umask(02)
+    os.umask(0o2)
     repo.gid = gid
 
 parser = argparse.ArgumentParser(
@@ -82,5 +98,5 @@ for manager in pkg_managers:
 for p in pdict:
     oslist = list(pdict[p])
     oslist.sort()
-    print p, "[", ", ".join(oslist), "]"
+    print(p, "[", ", ".join(oslist), "]")
 # vim: filetype=python:

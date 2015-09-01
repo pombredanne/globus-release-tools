@@ -1,6 +1,22 @@
+# Copyright 2014-2015 University of Chicago
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Package to manage Globus Toolkit Zypper repositories
 """
+
+from __future__ import print_function
 
 import datetime
 import fnmatch
@@ -126,16 +142,16 @@ class Repository(repo.Repository):
         self.dirty = False
         distro_repodir = self.repo_path
 
-        print "Updating metadata in ", distro_repodir
+        print("Updating metadata in ", distro_repodir)
         dirs = ["media.1", "RPMS/noarch", "RPMS/src", "RPMS/x86_64" ]
         for dirname in [(os.path.join(distro_repodir, x)) for x in dirs]:
             if not os.path.exists(dirname):
-                os.makedirs(dirname, 0775)
+                os.makedirs(dirname, 0o775)
                 if repo.gid is not None:
                     chgrp_dirname = dirname
                     while chgrp_dirname != distro_repodir:
                         os.chown(chgrp_dirname, repo.uid, repo.gid)
-                        os.chmod(chgrp_dirname, 02775)
+                        os.chmod(chgrp_dirname, 0o2775)
                         chgrp_dirname = os.path.dirname(chgrp_dirname)
         media_path = os.path.join(distro_repodir, "media.1", "media")
 

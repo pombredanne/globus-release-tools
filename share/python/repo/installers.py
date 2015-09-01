@@ -1,10 +1,30 @@
+# Copyright 2014-2015 University of Chicago
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Package to manage the installers repository
 """
 
 import ast
 import fnmatch
-import urllib
+
+
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib import urlopen
+
 import os
 import os.path
 import shutil
@@ -141,12 +161,12 @@ class Cache(repo.Cache):
         for i in self.installers:
             i_cache_dir = os.path.join(self.cache_dir, i.subdir)
             if not os.path.exists(i_cache_dir):
-                os.makedirs(i_cache_dir, 0775)
+                os.makedirs(i_cache_dir, 0o775)
                 if repo.gid is not None:
                     dirname = i_cache_dir
                     while dirname != self.cache_dir:
                         os.chown(dirname, repo.uid, repo.gid)
-                        os.chmod(dirname, 02775)
+                        os.chmod(dirname, 0o2775)
                         dirname = os.path.dirname(dirname)
             urls = self._fetch_artifact_list(i)
             for u in urls:
@@ -160,8 +180,7 @@ class Cache(repo.Cache):
         result_artifacts = []
 
         jenkins_job_url = self.JOB_PATTERN % (i.name)
-        opener = urllib.URLopener()
-        resp = opener.open(jenkins_job_url)
+        resp = urlopen(jenkins_job_url)
         code = resp.code if 'code' in resp.__dict__ else None
 
         if code == 200:
@@ -179,8 +198,7 @@ class Cache(repo.Cache):
     def _fetch_url(self, url, installer_cache_path, force=False):
         local_name = os.path.join(installer_cache_path, os.path.basename(url))
         if force or not os.path.exists(local_name):
-            opener = urllib.URLopener()
-            resp = opener.open(url)
+            resp = urlopen(url)
             code = resp.code if 'code' in resp.__dict__ else None
             if code == 200:
                 f = file(local_name, "w")

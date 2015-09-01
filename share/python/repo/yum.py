@@ -1,3 +1,17 @@
+# Copyright 2014-2015 University of Chicago
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Package to manage the Globus Toolkit Yum repositories
 """
@@ -143,12 +157,12 @@ class Repository(repo.Repository):
         self.os = osname
 
         if not os.path.exists(self.repo_path):
-            os.makedirs(self.repo_path, 0775)
+            os.makedirs(self.repo_path, 0o775)
             if repo.gid is not None:
                 dirname = self.repo_path
                 while dirname != repo_top:
                     os.chown(dirname, repo.uid, repo.gid)
-                    os.chmod(dirname, 02775)
+                    os.chmod(dirname, 0o2775)
                     dirname = os.path.dirname(dirname)
 
         try:
@@ -351,4 +365,4 @@ class Manager(repo.Manager):
         return oses
 
     def __str__(self):
-        return " ".join(["Yum Manager [", ",".join(self.releases.keys()), "]"])
+        return " ".join(["Yum Manager [", ",".join(list(self.releases.keys())), "]"])

@@ -1,3 +1,17 @@
+# Copyright 2014-2015 University of Chicago
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Package to manage the Globus Toolkit source tarball repository
 """
@@ -79,15 +93,26 @@ class Repository(repo.Repository):
             distro_repodir = self.repo_path
 
             if not os.path.exists(distro_repodir):
-                os.makedirs(distro_repodir, 0755)
+                os.makedirs(distro_repodir, 0o755)
                 if repo.gid is not None:
                     os.chown(distro_repodir, repo.uid, repo.gid)
-                    os.chmod(distro_repodir, 02775)
+                    os.chmod(distro_repodir, 0o2775)
 
             for pkg in os.listdir(distro_repodir):
                 pkg_filename = os.path.join(distro_repodir, pkg)
                 if os.path.isfile(pkg_filename):
                     repo._digest_file(pkg_filename)
+            gcs = self.packages.get('globus_connect_server',[])
+            max_gcs_version = package.Version("0")
+            for gcs_pkg in gcs:
+                if gcs_pkg.version > max_gcs_version:
+                    max_gcs_version = gcs_pkg.version
+            latest_file = file(
+                    os.path.join(
+                            distro_repodir, "GLOBUS_CONNECT_SERVER_LATEST"),
+                            "w")
+            latest_file.write(max_gcs_version.strversion + "\n")
+            latest_file.close()
 
 class Release(repo.Release):
     """

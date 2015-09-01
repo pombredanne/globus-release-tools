@@ -1,3 +1,17 @@
+# Copyright 2014-2015 University of Chicago
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Package to manage the Globus Toolkit Debian repositories
 """
@@ -106,7 +120,7 @@ class Repository(repo.Repository):
                 dirname = pkg_dest_dir
                 while dirname != self.repo_path:
                     os.chown(dirname, repo.uid, repo.gid)
-                    os.chmod(dirname, 02775)
+                    os.chmod(dirname, 0o2775)
                     dirname = os.path.dirname(dirname)
         if not os.path.exists(dest_path):
             oscmd = 'reprepro --silent -b %(repodir)s --export=never include %(codename)s %(pkgpath)s' % {
@@ -148,7 +162,7 @@ class Repository(repo.Repository):
             distributions_file = os.path.join(confdir, "distributions")
 
             if not os.path.exists(confdir):
-                os.makedirs(confdir, 0755)
+                os.makedirs(confdir, 0o755)
 
             Repository._update_deb_distributions_conf(distributions_file, self.codename)
             oscmd = 'reprepro --silent -b "%s" export' % (self.repo_path)
