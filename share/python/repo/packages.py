@@ -102,17 +102,37 @@ class Repository(repo.Repository):
                 pkg_filename = os.path.join(distro_repodir, pkg)
                 if os.path.isfile(pkg_filename):
                     repo._digest_file(pkg_filename)
-            gcs = self.packages.get('globus_connect_server',[])
-            max_gcs_version = package.Version("0")
-            for gcs_pkg in gcs:
-                if gcs_pkg.version > max_gcs_version:
-                    max_gcs_version = gcs_pkg.version
-            latest_file = file(
-                    os.path.join(
-                            distro_repodir, "GLOBUS_CONNECT_SERVER_LATEST"),
-                            "w")
-            latest_file.write(max_gcs_version.strversion + "\n")
-            latest_file.close()
+        self.update_gcs_version_file()
+
+    def update_gcs_version_file(self):
+        """
+        Update the GLOBUS_CONNECT_SERVER_LATEST file, which is used by
+        the GCS scripts to nag the user about not being up-to-date
+        """
+        gcs = self.packages.get('globus_connect_server',[])
+        max_gcs_version = repo.package.Version("0")
+        for gcs_pkg in gcs:
+            if gcs_pkg.version > max_gcs_version:
+                max_gcs_version = gcs_pkg.version
+
+        latest_gcs_file_version = repo.package.Version("0")
+        latest_gcs_file_path = os.path.join(
+                        self.repo_path, "GLOBUS_CONNECT_SERVER_LATEST")
+        try:
+            latest_gcs_file = file(latest_gcs_file_path, "r")
+            latest_gcs_file_version = repo.package.Version(
+                    latest_gcs_file.read().strip())
+        except IOError as e:
+            pass
+        else:
+            latest_gcs_file.close()
+
+        if latest_gcs_file_version < max_gcs_version:
+            try:
+                latest_file = file(latest_gcs_file_path, "w")
+                latest_file.write(max_gcs_version.strversion + "\n")
+            finally:
+                latest_file.close()
 
 class Release(repo.Release):
     """

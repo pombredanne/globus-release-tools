@@ -365,4 +365,4 @@ class Manager(repo.Manager):
         return oses
 
     def __str__(self):
-        return " ".join(["Yum Manager [", ",".join(list(self.releases.keys())), "]"])
+        return " ".join(["Yum Manager [", ",".join(self.releases.keys()), "]"])

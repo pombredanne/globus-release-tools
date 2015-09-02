@@ -85,7 +85,7 @@ def update_yum_dest(root=default_root, cache=default_cache):
     print(yum_repos)
     repo.tree.yum.repo_tree_create_yum(root, yum_repos=yum_repos)
     # Copy the packages from the repos here to the destination
-    for repo in list(yum_repos.keys()):
+    for repo in yum_repos.keys():
         for archrepo in yum_repos[repo]:
             src_repodir = os.path.join(cache, "rpm", archrepo)
             dest_repodir = os.path.join(root, "unstable", "rpm", archrepo)
