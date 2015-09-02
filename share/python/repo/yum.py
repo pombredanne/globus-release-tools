@@ -366,3 +366,5 @@ class Manager(repo.Manager):
 
     def __str__(self):
         return " ".join(["Yum Manager [", ",".join(self.releases.keys()), "]"])
+
+# vim: filetype=python:

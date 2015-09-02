@@ -122,3 +122,5 @@ def sync_tree(root=default_root, cache=default_cache):
                         if os.path.exists(srcfn + ext):
                             desthash = destfn + ext
                             shutil.copy(srchash, desthash)
+
+# vim: filetype=python:

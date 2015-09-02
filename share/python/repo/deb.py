@@ -328,3 +328,5 @@ class Manager(repo.Manager):
 
     def __str__(self):
         return " ".join(["Deb Manager [", ",".join(self.releases.keys()), "]"])
+
+# vim: filetype=python:

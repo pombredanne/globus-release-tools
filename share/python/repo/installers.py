@@ -245,3 +245,5 @@ class Manager(repo.Manager):
 
     def __str__(self):
         return " ".join(["Installers Manager [", ",".join(self.releases.keys()), "]"])
+
+# vim: filetype=python:

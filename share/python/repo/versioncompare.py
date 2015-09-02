@@ -112,3 +112,5 @@ def ReleaseGreater(ver1, ver2):
         return False
     else:
         return rest1 > rest2
+
+# vim: filetype=python:

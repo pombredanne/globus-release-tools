@@ -79,3 +79,4 @@ class Metadata(object):
     def __str__(self):
         return "Name: %s\nVersion: %s\nRelease: %s\nPath: %s\nArch: %s\nSource: %s\nOS: %s\n" % ( self.name, self.version.strversion, self.version.release, self.path, self.arch, self.source_name, self.os)
 
+# vim: filetype=python:

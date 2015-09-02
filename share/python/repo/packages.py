@@ -210,3 +210,5 @@ class Manager(repo.Manager):
 
     def __str__(self):
         return " ".join(["Packages Manager [", ",".join(self.releases.keys()), "]"])
+
+# vim: filetype=python:

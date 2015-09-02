@@ -375,3 +375,5 @@ def setup_gpg_agent():
         os.putenv(var, val)
         procpid = int(val.split(":")[1])
         atexit.register(lambda x: os.kill(x, signal.SIGTERM), procpid)
+
+# vim: filetype=python:
