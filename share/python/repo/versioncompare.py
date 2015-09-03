@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
+
 """
 Version comparison routines to deal with software version numbers, such as
 1.2.1, or 1.2rc3, based on https://gist.github.com/kjk/458188tc
@@ -30,6 +32,8 @@ def version2float(v):
     """
     Convert a Mozilla-style version string into a floating-point number
     1.2.3.4, 1.2a5, 2.3.4b1pre, 3.0rc2, etc
+
+    Or, convert an OpenSSH-portable version string with gsissh date+letter
     """
     version = [
         0, 0, 0, 0, # 4-part numerical revision
@@ -42,25 +46,39 @@ def version2float(v):
         version[6] = 0
         v = parts[0]
  
-    if ".beta" in v:
-        v = __v2fhelper(v, ".beta", version, 2)
-    elif "beta" in v:
-        v = __v2fhelper(v, "beta", version, 2)
+    ver = 0
+    m = re.match(r"(\d+).(\d+)p(\d+)-(\d{8})([a-z]?)", v, 0)
+    if m is not None:
+        # Assume gsi-openssh style:
+        # OpenSSH Portable version + date + optional letter version
+        if m is not None:
+            ver = float(m.group(1))
+            ver += float(m.group(2)) / 100.
+            ver += float(m.group(3)) / 10000.
+            ver += float(m.group(4)) / 1000000000000.
+            if m.group(5) != "":
+                letterval = ord(m.group(5)) - ord('a') + 1
+                ver += float(letterval) / 100000000000000.
     else:
-        v = __v2fhelper(v, "a",  version, 1)
-        v = __v2fhelper(v, "b",  version, 2)
-    v = __v2fhelper(v, "rc", version, 3)
+        if ".beta" in v:
+            v = __v2fhelper(v, ".beta", version, 2)
+        elif "beta" in v:
+            v = __v2fhelper(v, "beta", version, 2)
+        else:
+            v = __v2fhelper(v, "a",  version, 1)
+            v = __v2fhelper(v, "b",  version, 2)
+        v = __v2fhelper(v, "rc", version, 3)
  
-    parts = v.split(".")[:4]
-    for (p, i) in zip(parts, range(len(parts))):
-        version[i] = p
-    ver = float(version[0])
-    ver += float(version[1]) / 100.
-    ver += float(version[2]) / 10000.
-    ver += float(version[3]) / 1000000.
-    ver += float(version[4]) / 100000000.
-    ver += float(version[5]) / 10000000000.
-    ver += float(version[6]) / 1000000000000.
+        parts = v.split(".")[:4]
+        for (p, i) in zip(parts, range(len(parts))):
+            version[i] = p
+        ver = float(version[0])
+        ver += float(version[1]) / 100.
+        ver += float(version[2]) / 10000.
+        ver += float(version[3]) / 1000000.
+        ver += float(version[4]) / 100000000.
+        ver += float(version[5]) / 10000000000.
+        ver += float(version[6]) / 1000000000000.
     return ver
  
  
