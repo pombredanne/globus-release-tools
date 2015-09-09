@@ -127,7 +127,7 @@ def ReleaseGreater(ver1, ver2):
     if accum1 != "":
         a1f = version2float(accum1)
     if accum2 != "":
-    a2f = version2float(accum2)
+        a2f = version2float(accum2)
 
     if a1f > a2f:
         return True
