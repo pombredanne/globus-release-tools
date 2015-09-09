@@ -117,11 +117,16 @@ def ReleaseGreater(ver1, ver2):
             rest2 = ver2[r:]
             break
 
-    if accum1[-1] == '.':
+    if len(accum1) > 0 and accum1[-1] == '.':
         accum1 = accum1[:-1]
-    if accum2[-1] == '.':
+    if len(accum2) > 0 and accum2[-1] == '.':
         accum2 = accum2[:-1]
-    a1f = version2float(accum1)
+    a1f = 0.0
+    a2f = 0.0
+
+    if accum1 != "":
+        a1f = version2float(accum1)
+    if accum2 != "":
     a2f = version2float(accum2)
 
     if a1f > a2f:
