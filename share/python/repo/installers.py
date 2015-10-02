@@ -30,6 +30,7 @@ import os.path
 import shutil
 
 import repo
+import repo.artifacts
 import repo.package
 import repo.packages
 
@@ -168,42 +169,9 @@ class Cache(repo.Cache):
                         os.chown(dirname, repo.uid, repo.gid)
                         os.chmod(dirname, 0o2775)
                         dirname = os.path.dirname(dirname)
-            urls = self._fetch_artifact_list(i)
+            urls = repo.artifacts.list_artifacts(i.name, i.artifact_patterns)
             for u in urls:
-                self._fetch_url(u, i_cache_dir)
-
-    def _fetch_artifact_list(self, i):
-        """
-        Creates a list of URL strings matching the artifacts for this
-        installer and returns it.
-        """
-        result_artifacts = []
-
-        jenkins_job_url = self.JOB_PATTERN % (i.name)
-        resp = urlopen(jenkins_job_url)
-        code = resp.code if 'code' in resp.__dict__ else None
-
-        if code == 200:
-            artifacts = ast.literal_eval(resp.read()).get('artifacts')
-            for artifact in artifacts:
-                path = artifact['relativePath']
-                for pattern in i.artifact_patterns:
-                    if fnmatch.fnmatch(path, pattern):
-                        result_artifacts.append(self.ARTIFACT_PATTERN %
-                            (i.name, artifact['relativePath']))
-                        break
-        resp.close()
-        return result_artifacts
-
-    def _fetch_url(self, url, installer_cache_path, force=False):
-        local_name = os.path.join(installer_cache_path, os.path.basename(url))
-        if force or not os.path.exists(local_name):
-            resp = urlopen(url)
-            code = resp.code if 'code' in resp.__dict__ else None
-            if code == 200:
-                f = file(local_name, "w")
-                f.write(resp.read())
-                f.close()
+                repo.artifacts.fetch_url(u, i_cache_dir)
 
 class Manager(repo.Manager):
     """

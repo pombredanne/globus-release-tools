@@ -32,6 +32,7 @@ import repo
 import repo.deb
 import repo.packages
 import repo.installers
+import repo.doxygen
 import repo.yum
 import repo.zypper
 
@@ -42,6 +43,11 @@ parser.add_argument(
     help="Synchronize packages to the ROOT directory ["
             + repo.default_root + "]",
     default=repo.default_root)
+parser.add_argument(
+    "-a", "--api-root",
+    help="Synchronize api docs to the API_ROOT directory ["
+            + repo.default_api_root + "]",
+    default=repo.default_api_root)
 parser.add_argument(
     "-c", "--cache",
     help="Cache files in CACHE directory ["
@@ -111,12 +117,22 @@ if args.installers_only:
     print("==================================")
     print("Syncing with builds.globus.org....")
     print("==================================")
-    manager = repo.installers.Manager(cache_root=args.cache,
-            root=args.root)
-    print("========================")
-    print("Updating installers repo")
-    print("========================")
-    installers = manager.promote_packages(dryrun=args.dryrun)
-    if args.dryrun:
+    managers = dict()
+    print("Updating installers cache")
+    managers['installers'] = repo.installers.Manager(
+            cache_root=args.cache, root=args.root)
+    print("Updating API docs cache")
+    managers['doxygen'] = repo.doxygen.Manager(
+            cache_root=args.cache, root=args.api_root)
+    print("==============")
+    print("Updating repos")
+    print("==============")
+    installers = []
+    for man in managers:
+        print("Updating %s repo" % man)
+        manager = managers[man]
+        installers = installers + manager.promote_packages(dryrun=args.dryrun)
+
+    if args.dryrun or args.verbose:
         print("\n".join([(p.path + " to " + p.os) for p in installers]))
 # vim: filetype=python:

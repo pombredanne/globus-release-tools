@@ -25,6 +25,7 @@ import signal
 from subprocess import Popen, PIPE
 
 default_root = "/mcs/globus.org/ftppub/gt6"
+default_api_root = "/mcs/globus.org/api"
 default_releases = ["unstable", "testing", "stable"]
 default_cache = os.path.join(os.getenv("HOME"), "repo-cache")
 
