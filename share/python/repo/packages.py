@@ -102,7 +102,6 @@ class Repository(repo.Repository):
                 pkg_filename = os.path.join(distro_repodir, pkg)
                 if os.path.isfile(pkg_filename):
                     repo._digest_file(pkg_filename)
-        self.update_gcs_version_file()
 
     def update_gcs_version_file(self):
         """

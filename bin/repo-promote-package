@@ -130,12 +130,12 @@ for man in pkg_managers:
             name=args.package, from_release=args.from_release,
             to_release=args.to_release, dryrun=args.dryrun)
 
-    if args.dryrun:
-        for p in packages:
-            pkey = "-".join([p.name, p.version.strversion])
-            if pkey not in pdict:
-                pdict[pkey] = set()
-            pdict[pkey].add(p.os)
+    for p in packages:
+        pkey = "-".join([p.name, p.version.strversion])
+        if pkey not in pdict:
+            pdict[pkey] = set()
+        pdict[pkey].add(p.os)
+
     if args.advisory is not None:
         for p in packages:
             if p.arch == 'src' and p.name not in advisories and \
@@ -166,12 +166,22 @@ for man in pkg_managers:
                 if len(files) > 0:
                     advisories[p.name] = "%s;%s;6.0;bug;%s\n" % (today, ",".join(files), changelog)
 
+if args.to_release == 'stable':
+    gcs_packages = [(p) for p in pdict.keys() \
+            if p.startswith('globus-connect-server')]
+
+    if len(gcs_packages) > 0:
+        packages_manager = repo.packages.Manager(root=args.root,
+	    use_cache=False)
+        packages_manager.get_release('stable').repositories_for_package(None)[0].update_gcs_version_file()
+
+
 if args.dryrun:
     print("====================")
     print("Promotion candidates")
     print("====================")
-    for p in pdict:
-        print(p, "to [", ", ".join(pdict[p]), "]")
+    for (p,v) in pdict:
+        print("-".join(p, v.strversion), "to [", ", ".join(pdict[(p,v)]), "]")
 
 if args.package is None:
     print("=============================")
