@@ -180,8 +180,8 @@ if args.dryrun:
     print("====================")
     print("Promotion candidates")
     print("====================")
-    for (p,v) in pdict:
-        print("-".join(p, v.strversion), "to [", ", ".join(pdict[(p,v)]), "]")
+    for p in pdict.keys():
+        print(p, " to [", ", ".join(pdict[p]), "]")
 
 if args.package is None:
     print("=============================")
