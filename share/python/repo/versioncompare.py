@@ -34,6 +34,7 @@ def version2float(v):
     1.2.3.4, 1.2a5, 2.3.4b1pre, 3.0rc2, etc
 
     Or, convert an OpenSSH-portable version string with gsissh date+letter
+    Or, convert a gridftp-blackpearl-dsi version string with version._BETA
     """
     version = [
         0, 0, 0, 0, # 4-part numerical revision
@@ -64,6 +65,8 @@ def version2float(v):
             v = __v2fhelper(v, ".beta", version, 2)
         elif "beta" in v:
             v = __v2fhelper(v, "beta", version, 2)
+        elif "_BETA" in v:
+            v = __v2fhelper(v, "_BETA", version, 2)
         else:
             v = __v2fhelper(v, "a",  version, 1)
             v = __v2fhelper(v, "b",  version, 2)

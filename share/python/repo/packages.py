@@ -140,7 +140,7 @@ class Release(repo.Release):
     Each Release contains a collection of repositories for different
     architectures for a particular operating system release.
     """
-    pkg_re = re.compile(r"(?P<name>(?!globusonline-)[^-]*|globusonline-[a-z-]*[a-z]*)-(?P<version>.*?)(-src|-gt5.2)?.tar.gz$")
+    pkg_re = re.compile(r"(?P<name>(?!globusonline-|gridftp-blackpearl-dsi-)[^-]*|globusonline-[a-z-]*[a-z]*|gridftp-blackpearl-dsi-)-(?P<version>.*?)(-src|-gt5.2)?.tar.gz$")
     def __init__(self, name, topdir):
         r = Repository(topdir, "packages", Release.pkg_re)
         super(Release, self).__init__(name, r)
