@@ -67,6 +67,8 @@ def version2float(v):
             v = __v2fhelper(v, "beta", version, 2)
         elif "_BETA" in v:
             v = __v2fhelper(v, "_BETA", version, 2)
+        elif "BETA" in v:
+            v = __v2fhelper(v, "BETA", version, 2)
         else:
             v = __v2fhelper(v, "a",  version, 1)
             v = __v2fhelper(v, "b",  version, 2)
