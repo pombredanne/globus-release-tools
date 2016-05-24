@@ -66,8 +66,13 @@ parser.add_argument(
     default=None)
 parser.add_argument(
     "-x", "--exclude-os-name",
-    help="Do not process packages related to the OS_NAME. The name should be of the form os/release for an RPM distro (e.g. el/5 or sles/11) or a codename for a Deb distro (e.g. wheezy)",
+    help="Do not process packages related to the OS_NAME. The OS_NAME string should be a comma-separated list of OSes to exclude. The form of the OS names are os/release for an RPM distro (e.g. el/5 or sles/11) or a codename for a Deb distro (e.g. wheezy)",
     dest="exclude_os_name",
+    default=None)
+parser.add_argument(
+    "-X", "--exclude-package-names",
+    help="Do not process packages that have names that match EXCLUDE_PACKAGE_NAMES.",
+    dest="exclude_package_names",
     default=None)
 parser.add_argument(
     "-d", "--dryrun",
@@ -80,11 +85,15 @@ parser.add_argument(
 
 args = parser.parse_args()
 os_name = None
-exclude_os_names = None
+exclude_os_names = ["fedora/19", "fedora/20", "fedora/21", "squeeze", "lucid", "utopic", "vivid" ]
+exclude_package_names = [".*mod-gridftp.*", "globus-gridftp-server-s3.*", "globus-gridftp-server-ceph.*"]
+
 if args.os_name is not None:
     os_name = [args.os_name]
 if args.exclude_os_name is not None:
-    exclude_os_names = [args.exclude_os_name]
+    exclude_os_names.extend(args.exclude_os_name.split(","))
+if args.exclude_package_names is not None:
+    exclude_package_names.extend(args.exclude_package_names.split(","))
 
 if socket.gethostname() == 'globuscvs':
     gid = grp.getgrnam('globdev').gr_gid
@@ -105,16 +114,13 @@ print("====================")
 pkg_managers = dict()
 print("Parsing deb")
 pkg_managers['deb'] = \
-    repo.deb.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name,
-        exclude_os_names=exclude_os_names)
+    repo.deb.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
 print("Parsing yum")
 pkg_managers['yum'] = \
-    repo.yum.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name,
-        exclude_os_names=exclude_os_names)
+    repo.yum.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
 print("Parsing zypper")
 pkg_managers['zypper'] = \
-    repo.zypper.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name,
-        exclude_os_names=exclude_os_names)
+    repo.zypper.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
 
 pdict = dict()
 advisories = {}
@@ -128,7 +134,7 @@ for man in pkg_managers:
     manager = pkg_managers[man]
     packages = manager.promote_packages(
             name=args.package, from_release=args.from_release,
-            to_release=args.to_release, dryrun=args.dryrun)
+            to_release=args.to_release, dryrun=args.dryrun, exclude_package_names=exclude_package_names)
 
     for p in packages:
         pkey = "-".join([p.name, p.version.strversion])
