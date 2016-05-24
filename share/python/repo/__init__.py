@@ -21,6 +21,7 @@ import fnmatch
 import hashlib
 import os
 import os.path
+import re
 import signal
 from subprocess import Popen, PIPE
 
@@ -291,10 +292,9 @@ class Cache(object):
         return self._release.get_architectures(osname)
 
 class Manager(object):
-    def __init__(self, cache, releases, exclude_packages):
+    def __init__(self, cache, releases):
         self.cache = cache
         self.releases = releases
-        self.exclude_packages = exclude_packages
 
     def get_release(self, releasename):
         if releasename == 'cache':
@@ -307,7 +307,7 @@ class Manager(object):
 
     def promote_packages(self, from_release=None, 
             to_release="unstable", os=None, name=None, version=None,
-            dryrun=False, exclude_packages=None):
+            dryrun=False, exclude_package_names=None):
         """
         Find new packages in the *from_release* (or from the Manager's *cache* 
         if from_release is None), that are not in *to_release* and
@@ -336,7 +336,7 @@ class Manager(object):
         *dryrun*::
             (Optional) Boolean whether to prepare to promote the packages or
             just compute which packages are eligible for promotion.
-        *exclude_packages*::
+        *exclude_package_names*::
             (Optional) List of regular expressions matching packages to 
             exclude from the promotion list.
         Returns
@@ -363,12 +363,12 @@ class Manager(object):
         for src in src_candidates:
             for package in from_release.get_packages(source=src):
                 skip = False
-                if exclude_packages is not None:
-                    for exclude in exclude_packages:
+                if exclude_package_names is not None:
+                    for exclude in exclude_package_names:
                         if re.match(exclude, package.name) is not None:
                             skip = True
                             break
-                if (!skip) and to_release_object.is_newer(package):
+                if (not skip) and to_release_object.is_newer(package):
                     if not dryrun:
                         to_release_object.add_package(package,
                                 update_metadata=False)
