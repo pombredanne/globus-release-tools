@@ -291,9 +291,10 @@ class Cache(object):
         return self._release.get_architectures(osname)
 
 class Manager(object):
-    def __init__(self, cache, releases):
+    def __init__(self, cache, releases, exclude_packages):
         self.cache = cache
         self.releases = releases
+        self.exclude_packages = exclude_packages
 
     def get_release(self, releasename):
         if releasename == 'cache':
@@ -306,7 +307,7 @@ class Manager(object):
 
     def promote_packages(self, from_release=None, 
             to_release="unstable", os=None, name=None, version=None,
-            dryrun=False):
+            dryrun=False, exclude_packages=None):
         """
         Find new packages in the *from_release* (or from the Manager's *cache* 
         if from_release is None), that are not in *to_release* and
@@ -335,6 +336,9 @@ class Manager(object):
         *dryrun*::
             (Optional) Boolean whether to prepare to promote the packages or
             just compute which packages are eligible for promotion.
+        *exclude_packages*::
+            (Optional) List of regular expressions matching packages to 
+            exclude from the promotion list.
         Returns
         -------
             This function returns a list of packages that were promoted 
@@ -358,7 +362,13 @@ class Manager(object):
         # from_release and copy them over if they are not in to_release
         for src in src_candidates:
             for package in from_release.get_packages(source=src):
-                if to_release_object.is_newer(package):
+                skip = False
+                if exclude_packages is not None:
+                    for exclude in exclude_packages:
+                        if re.match(exclude, package.name) is not None:
+                            skip = True
+                            break
+                if (!skip) and to_release_object.is_newer(package):
                     if not dryrun:
                         to_release_object.add_package(package,
                                 update_metadata=False)
