@@ -114,13 +114,13 @@ print("====================")
 pkg_managers = dict()
 print("Parsing deb")
 pkg_managers['deb'] = \
-    repo.deb.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name)
+    repo.deb.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
 print("Parsing yum")
 pkg_managers['yum'] = \
-    repo.yum.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name)
+    repo.yum.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
 print("Parsing zypper")
 pkg_managers['zypper'] = \
-    repo.zypper.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name)
+    repo.zypper.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
 
 pdict = dict()
 advisories = {}
