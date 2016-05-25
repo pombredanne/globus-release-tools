@@ -112,7 +112,7 @@ class Cache(repo.Cache):
                 "GT6-BINARIES-MAC",
                 "mac",
                 [
-                    "artifacts/globus_toolkit*.pkg",
+                    "artifacts/GlobusToolkit*.pkg",
                     "artifacts/Globus*.tar.gz"
                 ],
                 r"(?P<name>[a-zA-Z_]*-(?P<version>([0-9.]|beta|rc)+))(-build(?P<release>[0-9]+))?(\.pkg|\.tar\.gz)"),
