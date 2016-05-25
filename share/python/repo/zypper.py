@@ -226,7 +226,10 @@ class Release(repo.Release):
 
     def repositories_for_os_arch(self, osname, arch):
         if osname is not None:
-            return [self.repositories[osname]]
+            if osname in self.repositories:
+                return [self.repositories[osname]]
+            else:
+                return []
         else:
             return [self.repositories[repo] for repo in self.repositories]
 

@@ -234,7 +234,10 @@ class Release(object):
         By default, its a list containing the repository that matches the
         package's os and arch, but subclasses can override this
         """
-        return [self.repositories[package.os][package.arch]]
+        if package.os in self.repositories:
+            return [self.repositories[package.os][package.arch]]
+        else:
+            return []
 
     def get_operating_systems(self):
         return self.repositories.keys()

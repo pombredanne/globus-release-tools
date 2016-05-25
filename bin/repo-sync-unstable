@@ -61,6 +61,11 @@ parser.add_argument(
     help="Sync installers, not packages",
     dest="installers_only",
     action="store_true")
+parser.add_argument(
+    "-x", "--exclude-os-name",
+    help="Do not process packages related to the OS_NAME. The OS_NAME string should be a comma-separated list of OSes to exclude. The form of the OS names are os/release for an RPM distro (e.g. el/5 or sles/11) or a codename for a Deb distro (e.g. wheezy)",
+    dest="exclude_os_name",
+    default=None)
 
 parser.add_argument(
     "-d", "--dryrun",
@@ -73,6 +78,9 @@ parser.add_argument(
     action='store_true')
 
 args = parser.parse_args()
+exclude_os_names = ["fedora/19", "fedora/20", "fedora/21", "squeeze", "lucid", "utopic", "vivid" ]
+if args.exclude_os_name is not None:
+    exclude_os_names.extend(args.exclude_os_name.split(","))
 
 if socket.gethostname() == 'globuscvs':
     gid = grp.getgrnam('globdev').gr_gid
@@ -93,14 +101,14 @@ if not args.installers_only:
     print("==========================================")
     managers = dict()
     print("Updating deb cache")
-    managers['deb'] = repo.deb.Manager(cache_root=args.cache, root=args.root)
+    managers['deb'] = repo.deb.Manager(cache_root=args.cache, root=args.root, exclude_os_names=exclude_os_names)
 
     print("Updating yum cache")
-    managers['yum'] = repo.yum.Manager(cache_root=args.cache, root=args.root)
+    managers['yum'] = repo.yum.Manager(cache_root=args.cache, root=args.root, exclude_os_names=exclude_os_names)
     print("Updating packages cache")
     managers['packages'] = repo.packages.Manager(cache_root=args.cache, root=args.root)
     print("Updating zypper cache")
-    managers['zypper'] = repo.zypper.Manager(cache_root=args.cache, root=args.root)
+    managers['zypper'] = repo.zypper.Manager(cache_root=args.cache, root=args.root, exclude_os_names=exclude_os_names)
 
     print("========================")
     print("Updating repositories...")

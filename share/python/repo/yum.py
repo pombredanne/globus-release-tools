@@ -231,11 +231,14 @@ class Release(repo.Release):
 
     def repositories_for_package(self, package):
         if package.arch in [ 'noarch', 'i686', 'i386' ]:
-            return [self.repositories[package.os][arch]
-                    for arch in self.get_architectures(package.os) 
-                    if arch != 'src']
+            if package.os in self.repositories:
+                return [self.repositories[package.os][arch]
+                        for arch in self.get_architectures(package.os) 
+                        if arch != 'src']
         else:
-            return [self.repositories[package.os][package.arch]]
+            if package.os in self.repositories:
+                return [self.repositories[package.os][package.arch]]
+        return []
 
 class Cache(repo.Cache):
     """
