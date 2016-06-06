@@ -17,6 +17,7 @@ Package to manage the Globus Toolkit Debian repositories
 """
 
 import fnmatch
+import gzip
 import os
 import os.path
 import re
@@ -34,12 +35,8 @@ class Repository(repo.Repository):
     ===================
     This class contains the debian package repository metadata. It extends the
     repo.Repository class with support code to parse debian package metadata
-    from changes files
+    from the release's Sources.gz file
     """
-
-    changes_fields = ["Format", "Date", "Source", "Binary", "Architecture", "Version", "Distribution", "Urgency", "Maintainer", "Changed-By", "Description", "Changes", "Checksums-Sha1", "Checksums-Sha256", "Files"]
-
-    changes_re = re.compile(r"-----BEGIN PGP SIGNED MESSAGE-----\nHash: .*\n\n(" + "|".join([ r"%s: (?P<%s>.*\n(( [^ ]+\n)*\n)?)" % ( field, field.replace("-", "") )  for field in changes_fields])+")*")
 
     def __init__(self, repo_path, codename, arch):
         super(Repository, self).__init__()
@@ -47,51 +44,105 @@ class Repository(repo.Repository):
         self.codename = codename
         self.dirty = False
 
+        pooldir = os.path.join(repo_path, "pool", "contrib")
         distdir = os.path.join(repo_path, "dists", codename)
 
         if not os.path.exists(distdir):
             self.update_metadata(True);
 
-        matchstring = "*.%s_*.changes" % (codename)
-        for dirpath, dirnames, filenames in os.walk(
-                    os.path.join(self.repo_path, "pool")):
-            for filename in filenames:
-                if fnmatch.fnmatch(filename, matchstring):
-                    pkgfile = os.path.join(dirpath, filename)
-                    f = file(pkgfile, "r")
-                    changes = Repository.changes_re.match(f.read())
-                    if changes is not None:
-                        pkg = None
-                        version, release = changes.group('Version').strip().\
-                                split("-", 1)
-                        path = pkgfile
-                        src = changes.group('Source').strip() + "_" + \
-                                changes.group("Version")
+        packages_file = os.path.join(distdir, "contrib", "binary-%s" %(arch), "Packages.gz")
 
-                        if arch in changes.group('Architecture').strip().split(" ") or changes.group('Architecture').strip() == 'all':
-                            if arch == 'source':
-                                name = changes.group('Source').strip()
-                                pkg = repo.package.Metadata(
-                                        name,
-                                        version,
-                                        release,
-                                        pkgfile,
-                                        'src',
-                                        src,
-                                        self.codename)
-                            else:
-                                name = changes.group('Binary').strip()
-                                pkg = repo.package.Metadata(
-                                        name,
-                                        version,
-                                        release,
-                                        pkgfile,
-                                        arch,
-                                        src,
-                                        self.codename)
-                            if pkg.name not in self.packages:
-                                self.packages[pkg.name] = []
-                            self.packages[pkg.name].append(pkg)
+        if arch == 'source' or arch == 'all':
+            packages_file = os.path.join(distdir, "contrib", arch, "Sources.gz")
+
+        pkg = None
+
+        pf = gzip.open(packages_file)
+
+        name = None
+        source = None
+        version = None
+        release = None
+        filename = None
+        directory = None
+        pkgarch = None
+
+        for line in pf:
+            line = line.rstrip()
+
+            if line.startswith("Package: "):
+                name = line.split(": ", 1)[1]
+            elif line.startswith("Source: "):
+                source = line.split(": ", 1)[1]
+            elif line.startswith("Version: "):
+                version, release = line.strip().split(": ")[1].split("-",1)
+            elif line.startswith("Filename: "):
+                filename =  line.split(": ", 1)[1]
+            elif line.startswith("Directory: "):
+                directory =  line.split(": ", 1)[1]
+            elif line.startswith("Architecture: "):
+                pkgarch = line.split(": ", 1)[1]
+            elif line == "":
+                if name not in self.packages:
+                    self.packages[name] = []
+
+                if arch == 'source':
+                    src = name + "_" + version
+                    suffix = "source"
+                    filename = "%s-%s_%s.changes" %(src, release, suffix)
+                    filepath = os.path.join(
+                            pooldir,
+                            filename[0],
+                            filename.split("_", 1)[0],
+                            filename)
+                    self.packages[name].append(
+                            repo.package.Metadata(
+                                name,
+                                version,
+                                release,
+                                filepath,
+                                'src',
+                                src,
+                                self.codename))
+                    if pkgarch == 'all':
+                        suffix = "all"
+                        filename = "%s-%s_%s.changes" %(src, release, suffix)
+                        filepath = os.path.join(
+                                pooldir,
+                                filename[0],
+                                filename.split("_", 1)[0],
+                                filename)
+                        self.packages[name].append(
+                                repo.package.Metadata(
+                                    name,
+                                    version,
+                                    release,
+                                    filepath,
+                                    pkgarch,
+                                    src,
+                                    self.codename))
+                else:
+                    if source is None:
+                        source = name
+                    filepath = os.path.join(pooldir, filename)
+                    src = source + "_" + version
+                    self.packages[name].append(
+                            repo.package.Metadata(
+                                name,
+                                version,
+                                release,
+                                filename,
+                                arch,
+                                src,
+                                self.codename))
+
+                name = None
+                source = None
+                version = None
+                release = None
+                filename = None
+                pkgarch = None
+
         for n in self.packages:
             self.packages[n].sort()
 
@@ -220,6 +271,20 @@ class Release(repo.Release):
                 else:
                     r[codename][arch] = Repository(topdir, codename, arch)
         super(Release, self).__init__(name, r)
+
+    def repositories_for_package(self, package):
+        """
+        Returns a list of repositories where the given package would belong.
+        By default, its a list containing the repository that matches the
+        package's os and arch, but subclasses can override this
+        """
+        repoarch = package.arch
+        if package.arch == 'all':
+            repoarch = 'src'
+        if package.os in self.repositories:
+            return [self.repositories[package.os][repoarch]]
+        else:
+            return []
 
 class Cache(repo.Cache):
     """
