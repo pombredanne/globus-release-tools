@@ -234,7 +234,10 @@ class Release(repo.Release):
             return [self.repositories[repo] for repo in self.repositories]
 
     def repositories_for_package(self, package):
-        return [self.repositories[package.os]]
+        if package.os in self.repositories:
+            return [self.repositories[package.os]]
+        else:
+            return []
 
 class Cache(repo.Cache):
     """
