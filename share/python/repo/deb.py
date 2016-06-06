@@ -124,14 +124,20 @@ class Repository(repo.Repository):
                 else:
                     if source is None:
                         source = name
-                    filepath = os.path.join(pooldir, filename)
                     src = source + "_" + version
+                    changesfile = "%s-%s_%s.changes" %(src, release, pkgarch)
+
+                    filepath = os.path.join(
+                                pooldir,
+                                changesfile[0],
+                                changesfile.split("_", 1)[0],
+                                changesfile)
                     self.packages[name].append(
                             repo.package.Metadata(
                                 name,
                                 version,
                                 release,
-                                filename,
+                                filepath,
                                 arch,
                                 src,
                                 self.codename))
