@@ -125,22 +125,29 @@ class Repository(repo.Repository):
                     if source is None:
                         source = name
                     src = source + "_" + version
-                    changesfile = "%s-%s_%s.changes" %(src, release, pkgarch)
 
-                    filepath = os.path.join(
+                    archcands = [pkgarch, "all+"+pkgarch, "source+"+pkgarch, "source+all+"+pkgarch]
+                    filepath = ""
+                    for archcand in archcands:
+                        changesfile = "%s-%s_%s.changes" %(src, release, archcand)
+                        testfile = os.path.join(
                                 pooldir,
                                 changesfile[0],
                                 changesfile.split("_", 1)[0],
                                 changesfile)
-                    self.packages[name].append(
-                            repo.package.Metadata(
-                                name,
-                                version,
-                                release,
-                                filepath,
-                                arch,
-                                src,
-                                self.codename))
+                        if os.path.exists(testfile):
+                            filepath=testfile
+                            break
+                    if filepath != "":
+                        self.packages[name].append(
+                                repo.package.Metadata(
+                                    name,
+                                    version,
+                                    release,
+                                    filepath,
+                                    arch,
+                                    src,
+                                    self.codename))
 
                 name = None
                 source = None
