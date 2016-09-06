@@ -1,0 +1,132 @@
+#!/usr/bin/env python
+
+# Copyright 2016 University of Chicago
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import sys
+import os
+import os.path
+import argparse
+
+import boto3
+s3_client = boto3.client('s3')
+
+
+def import_repo():
+    """
+    Does an import that involves munging the pythonpath.
+    """
+    sys.path.append(os.path.join(
+            os.path.dirname(sys.argv[0]),
+            "..",
+            "share",
+            "python"))
+    import repo
+    return repo
+
+
+def files_in_dir(start_dir):
+    """
+    Walk a dir and just yield filenames as abspaths, plus their relative
+    location WRT the start dir
+    Lets us start with a path relative to the CWD, but get relative paths WRT
+    the dir we're listing.
+    """
+    fullpath = os.path.abspath(start_dir)
+    for (path, dirs, files) in os.walk(fullpath):
+        for filename in files:
+            full_fname = os.path.join(path, filename)
+            yield (full_fname, os.path.relpath(full_fname, fullpath))
+
+
+def s3_upload_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
+                  verbose=False):
+    """
+    Upload a directory to an S3 bucket, under a given prefix.
+    Normalizes the prefix as part of a path, so prefixes like `../` are
+    dangerous, and may cause unexpected behavior.
+    """
+    for filename, relpath in files_in_dir(source_dir):
+        # important! normalize this path because it will be used as an S3
+        # prefix, so things like `/./` will be preserved!
+        dest_path = os.path.normpath(os.path.join(dest_prefix, relpath))
+
+        if verbose:
+            print("Uploading {0} to s3://{1}/{2}"
+                  .format(filename, bucket_name, dest_path))
+
+        if not dry_run:
+            # do the upload
+            s3_client.upload_file(filename, bucket_name, dest_path)
+
+
+def parse_args():
+    repo = import_repo()
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Copy a package from the local filesystem to a location in S3. "
+            "This is intended to run after packages have been generated on the"
+            "local filesystem"))
+    parser.add_argument(
+        "-r", "--root",
+        help="Root dir from which to copy files [" + repo.default_root + "]",
+        default=repo.default_root)
+    parser.add_argument(
+        "--subdir",
+        help=("Subdir of the root which we want to copy. Defaults to the "
+              "whole root dir"),
+        default=None)
+    parser.add_argument(
+        "-d", "--dryrun",
+        help="Display packages that would be copied, but don't actually " +
+             "execute the copy",
+        action='store_true')
+    parser.add_argument(
+        "-v", "--verbose",
+        help="Display every file that is copied",
+        action='store_true')
+    parser.add_argument(
+        "--s3-bucket",
+        help=("The bucket into which to copy files. Defaults to the "
+              "downloads.globus.org bucket."),
+        default='downloads.globus.org')
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    # for clarity's sake: this does not need to have a trailing slash, but it
+    # will be treated as a dirname on the destination
+    upload_prefix = 'data/toolkit/gt6'
+
+    source_dir = args.root
+
+    if args.subdir:
+        upload_prefix = os.path.join(upload_prefix, args.subdir)
+        source_dir = os.path.join(source_dir, args.subdir)
+
+    print("Uploading {0} to s3://{1}/{2}"
+          .format(source_dir, args.s3_bucket, upload_prefix))
+    s3_upload_dir(source_dir, args.s3_bucket, upload_prefix,
+                  dry_run=args.dryrun, verbose=args.verbose)
+
+
+if __name__ == '__main__':
+    main()
+
+
+# vim:ft=python
