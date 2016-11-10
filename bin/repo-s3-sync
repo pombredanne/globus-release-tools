@@ -18,8 +18,11 @@ import sys
 import os
 import os.path
 import argparse
+import hashlib
+import datetime
 
 import boto3
+import botocore.exceptions
 s3_client = boto3.client('s3')
 
 
@@ -34,6 +37,72 @@ def import_repo():
             "python"))
     import repo
     return repo
+
+
+def s3_checksum(bucket, key):
+    """
+    Get the MD5 of an S3 object
+    If the object doesn't exist, returns None
+    """
+    try:
+        # for some reason, the S3 API gives back the ETag quoted. Unquote it to
+        # be comparable to a locally generated hash
+        return s3_client.get_object(
+            Bucket=bucket, Key=key)["ETag"].replace('"', '')
+    except botocore.exceptions.ClientError:
+        return None
+
+
+def s3_size(bucket, key):
+    """
+    Get size (in bytes) of an S3 object
+    """
+    try:
+        return s3_client.get_object(Bucket=bucket, Key=key)["ContentLength"]
+    except botocore.exceptions.ClientError:
+        return None
+
+
+def s3_mtime(bucket, key):
+    """
+    Get size (in bytes) of an S3 object
+    """
+    try:
+        return s3_client.get_object(Bucket=bucket, Key=key)["LastModified"]
+    except botocore.exceptions.ClientError:
+        return None
+
+
+def compare_dispatch(method, filename, bucket_name, dest_path):
+    """
+    Returns True if things match and the file should not be uploaded
+    Returns False if the file should be uploaded
+
+    Dispatches on various comparison types, from the --compare-method cli arg
+    """
+    if method == "checksum":
+        # check if the ETag (S3 md5 hash) mismatches with a local hash
+        local_sum = hashlib.md5()
+        with open(filename, 'r') as f:
+            local_sum.update(f.read())
+        return local_sum.hexdigest() == s3_checksum(bucket_name, dest_path)
+    elif method == "size":
+        return os.stat(filename).st_size == s3_size(bucket_name, dest_path)
+    elif method == "modified":
+        # be more careful here, since we can't compare a datetime with None
+        # using '<='
+        # also, be careful and normalize to TZ naive dates
+        local_mtime = datetime.datetime.fromtimestamp(
+            os.stat(filename).st_mtime).replace(tzinfo=None)
+        s3_time = s3_mtime(bucket_name, dest_path)
+        if s3_time is None:
+            return False
+        return local_mtime <= s3_time.replace(tzinfo=None)
+    elif method == "nocheck":
+        return False
+    # just in case...
+    else:
+        return False
 
 
 def files_in_dir(start_dir):
@@ -51,7 +120,7 @@ def files_in_dir(start_dir):
 
 
 def s3_upload_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
-                  verbose=False):
+                  verbose=False, compare_method=None):
     """
     Upload a directory to an S3 bucket, under a given prefix.
     Normalizes the prefix as part of a path, so prefixes like `../` are
@@ -63,12 +132,26 @@ def s3_upload_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
         dest_path = os.path.normpath(os.path.join(dest_prefix, relpath))
 
         if verbose:
-            print("Uploading {0} to s3://{1}/{2}"
+            print("Check if we should upload {0} to s3://{1}/{2}"
                   .format(filename, bucket_name, dest_path))
 
-        if not dry_run:
-            # do the upload
-            s3_client.upload_file(filename, bucket_name, dest_path)
+        # check for dry run mode
+        if dry_run:
+            if verbose:
+                print("No upload: dryrun is set")
+            # short-circuit back to the top of the loop
+            continue
+
+        if compare_dispatch(compare_method, filename, bucket_name, dest_path):
+            if verbose:
+                print("No upload: comparison of type \"{0}\" passed"
+                      .format(compare_method))
+            continue
+
+        # do the upload
+        if verbose:
+            print("Confirmed, uploading")
+        s3_client.upload_file(filename, bucket_name, dest_path)
 
 
 def parse_args():
@@ -91,17 +174,22 @@ def parse_args():
     parser.add_argument(
         "-d", "--dryrun",
         help="Display packages that would be copied, but don't actually " +
-             "execute the copy",
+             "execute the copy [False]",
         action='store_true')
     parser.add_argument(
         "-v", "--verbose",
-        help="Display every file that is copied",
+        help="Display every file that is copied [False]",
         action='store_true')
     parser.add_argument(
         "--s3-bucket",
-        help=("The bucket into which to copy files. Defaults to the "
-              "downloads.globus.org bucket."),
+        help=("The bucket into which to copy files [downloads.globus.org]"),
         default='downloads.globus.org')
+    parser.add_argument(
+        "--compare-method",
+        help=("The method by which local files and S3 objects are compared in "
+              "order to determine whether or not to upload [checksum]"),
+        choices=['checksum', 'size', 'modified', 'nocheck'],
+        default='checksum')
 
     return parser.parse_args()
 
@@ -122,7 +210,8 @@ def main():
     print("Uploading {0} to s3://{1}/{2}"
           .format(source_dir, args.s3_bucket, upload_prefix))
     s3_upload_dir(source_dir, args.s3_bucket, upload_prefix,
-                  dry_run=args.dryrun, verbose=args.verbose)
+                  dry_run=args.dryrun, verbose=args.verbose,
+                  compare_method=args.compare_method)
 
 
 if __name__ == '__main__':
