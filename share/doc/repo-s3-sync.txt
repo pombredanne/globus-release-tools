@@ -1,0 +1,64 @@
+REPO-S3-SYNC(1)
+===============
+:doctype:       manpage
+:man source:    globus-release-tools
+:man manual:    Globus Toolkit Manual
+
+NAME
+----
+repo-s3-sync - Copy the newest packages from local cache to S3
+
+[[repo-s3-sync-SYNOPSIS]]
+SYNOPSIS
+--------
+*repo-s3-sync* [ -h | --help ]
+
+*repo-s3-sync* [ OPTIONS ]
+
+[[repo-s3-sync-DESCRIPTION]]
+DESCRIPTION
+-----------
+The *repo-s3-sync* program assumes that another script has already been run to
+create local packages in a directory identified as the *ROOT*. This may be the
+*CACHE* or *ROOT* in other scripts, depending on where it is run.
+Packages are copied from the *ROOT* into an S3 bucket (by default,
+*s3://downloads.globus.org*)
+
+The *repo-s3-sync* program can either copy all files in the *ROOT*, or a
+specified *--subdir* of the *ROOT*.
+
+By default, files are compared against any existing S3 data using checksums,
+but you can specify *--compare-method* to tune this behavior.
+
+To keep the process speedy, *repo-s3-sync* uses a large threadpool to
+parallelize the check-and-upload tasks. You can adjust the number of threads
+used with *--pool-size*
+
+[[repo-s3-sync-OPTIONS]]
+OPTIONS
+-------
+*-h, --help*::
+    Show a help message and exit
+*-r ROOT, --root ROOT*::
+    Sync packages from the ROOT directory
+*--subdir CACHE*::
+    Subdirectory of *ROOT* to sync instead of full *ROOT*
+*-d, --dryrun*::
+    Display files that would be copied, but don't actually execute the copy
+*-v, --verbose*::
+    Be verbose about checks and uploads, list every file
+*--s3-bucket BUCKETNAME*::
+    Sync to *BUCKETNAME*, defaults to +downloads.globus.org+
+*--compare-method METHOD*::
+    How to compare files against S3. One of 'checksum', 'size', 'modified'
+    (i.e. mtime vs. S3 modified time), 'nocheck'. Defaults to 'checksum'
+
+[[repo-s3-sync-SEEALSO]]
+SEE ALSO
+--------
+repo-promote-package(1)
+
+[[repo-s3-sync-AUTHOR]]
+AUTHOR
+------
+Copyright (C) 2014 University of Chicago
