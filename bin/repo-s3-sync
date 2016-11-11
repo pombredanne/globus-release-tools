@@ -14,12 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function
+
 import sys
 import os
 import os.path
 import argparse
 import hashlib
 import datetime
+import threading
+import Queue
+from multiprocessing.dummy import Pool as ThreadPool
 
 import boto3
 import botocore.exceptions
@@ -37,6 +42,23 @@ def import_repo():
             "python"))
     import repo
     return repo
+
+
+def printqueue_handler(printqueue):
+    """
+    This is the body of the thread that reads from a queue and prints its
+    contents.
+    """
+    while True:
+        print(printqueue.get(), end='')
+        sys.stdout.flush()
+
+# setup the printqueue and its handler thread
+printqueue = Queue.Queue()
+printhandler_thread = threading.Thread(target=printqueue_handler,
+                                       args=(printqueue,))
+printhandler_thread.daemon = True
+printhandler_thread.start()
 
 
 def s3_checksum(bucket, key):
@@ -120,38 +142,48 @@ def files_in_dir(start_dir):
 
 
 def s3_upload_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
-                  verbose=False, compare_method=None):
+                  verbose=False, compare_method=None, pool_size=10):
     """
     Upload a directory to an S3 bucket, under a given prefix.
     Normalizes the prefix as part of a path, so prefixes like `../` are
     dangerous, and may cause unexpected behavior.
     """
-    for filename, relpath in files_in_dir(source_dir):
+    def handle_file(args):
+        filename, relpath = args
+
         # important! normalize this path because it will be used as an S3
         # prefix, so things like `/./` will be preserved!
         dest_path = os.path.normpath(os.path.join(dest_prefix, relpath))
 
+        message = ""
+
         if verbose:
-            print("Check if we should upload {0} to s3://{1}/{2}"
-                  .format(filename, bucket_name, dest_path))
+            message += ("Check if we should upload {0} to s3://{1}/{2}\n"
+                        .format(filename, bucket_name, dest_path))
 
         # check for dry run mode
         if dry_run:
-            if verbose:
-                print("No upload: dryrun is set")
-            # short-circuit back to the top of the loop
-            continue
+            printqueue.put(message)
+            return
 
         if compare_dispatch(compare_method, filename, bucket_name, dest_path):
             if verbose:
-                print("No upload: comparison of type \"{0}\" passed"
-                      .format(compare_method))
-            continue
+                message += (("No upload for {0}: comparison of type "
+                             "\"{1}\" passed\n")
+                            .format(filename, compare_method))
+            printqueue.put(message)
+            return
 
         # do the upload
         if verbose:
-            print("Confirmed, uploading")
+            message += "Confirmed, uploading {0}\n".format(filename)
+
+        if message:
+            printqueue.put(message)
         s3_client.upload_file(filename, bucket_name, dest_path)
+
+    pool = ThreadPool(pool_size)
+    pool.map(handle_file, files_in_dir(source_dir))
 
 
 def parse_args():
@@ -190,6 +222,10 @@ def parse_args():
               "order to determine whether or not to upload [checksum]"),
         choices=['checksum', 'size', 'modified', 'nocheck'],
         default='checksum')
+    parser.add_argument(
+        "--pool-size",
+        help="Number of threads to use to speed IO [100]",
+        type=int, default=100)
 
     return parser.parse_args()
 
@@ -207,11 +243,12 @@ def main():
         upload_prefix = os.path.join(upload_prefix, args.subdir)
         source_dir = os.path.join(source_dir, args.subdir)
 
-    print("Uploading {0} to s3://{1}/{2}"
-          .format(source_dir, args.s3_bucket, upload_prefix))
+    printqueue.put("Uploading {0} to s3://{1}/{2}\n"
+                   .format(source_dir, args.s3_bucket, upload_prefix))
     s3_upload_dir(source_dir, args.s3_bucket, upload_prefix,
                   dry_run=args.dryrun, verbose=args.verbose,
-                  compare_method=args.compare_method)
+                  compare_method=args.compare_method,
+                  pool_size=args.pool_size)
 
 
 if __name__ == '__main__':
