@@ -90,9 +90,13 @@ class Repository(repo.Repository):
                     src = name + "_" + version
                     suffix = "source"
                     filename = "%s-%s_%s.changes" %(src, release, suffix)
+                    poolsubdir = filename[0:1]
+                    if filename.startswith("lib"):
+                        poolsubdir = filename[0:4]
+
                     filepath = os.path.join(
                             pooldir,
-                            filename[0],
+                            poolsubdir,
                             filename.split("_", 1)[0],
                             filename)
                     self.packages[name].append(
@@ -107,9 +111,12 @@ class Repository(repo.Repository):
                     if pkgarch == 'all':
                         suffix = "all"
                         filename = "%s-%s_%s.changes" %(src, release, suffix)
+                        poolsubdir = filename[0:1]
+                        if filename.startswith("lib"):
+                            poolsubdir = filename[0:4]
                         filepath = os.path.join(
                                 pooldir,
-                                filename[0],
+                                poolsubdir,
                                 filename.split("_", 1)[0],
                                 filename)
                         self.packages[name].append(
@@ -130,9 +137,12 @@ class Repository(repo.Repository):
                     filepath = ""
                     for archcand in archcands:
                         changesfile = "%s-%s_%s.changes" %(src, release, archcand)
+                        poolsubdir = changesfile[0:1]
+                        if changesfile.startswith("lib"):
+                            poolsubdir = changesfile[0:4]
                         testfile = os.path.join(
                                 pooldir,
-                                changesfile[0],
+                                poolsubdir,
                                 changesfile.split("_", 1)[0],
                                 changesfile)
                         if os.path.exists(testfile):
