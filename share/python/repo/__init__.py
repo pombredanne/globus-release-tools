@@ -272,6 +272,11 @@ class Cache(object):
 
     def sync(self):
         source = "builds.globus.org:/var/www/html/repo6/"
+        if os.uname()[1] == "builds.globus.org":
+            if self._cache_dir == "/var/www/html/repo6":
+                return
+            else:
+                source = "/var/www/html/repo6/"
         dest = self._cache_dir
         if self._cache_subdir is not None:
             source += self._cache_subdir + "/"
@@ -286,7 +291,10 @@ class Cache(object):
                     dirname = os.path.dirname(dirname)
         excludes = " ".join([("--exclude=" + ex) for ex in self._excludes])
 
-        os.system('rsync -a --no-p --no-g --chmod=Du=rwx,Dg=rwxs,Do=rx --chmod=Fu=rw,Fg=rw,Fo=r %s -e ssh "%s" "%s"' % (excludes, source, dest))
+        if not ":" in source:
+            os.system('rsync -a --no-p --no-g --chmod=Du=rwx,Dg=rwxs,Do=rx --chmod=Fu=rw,Fg=rw,Fo=r %s "%s" "%s"' % (excludes, source, dest))
+        else:
+            os.system('rsync -a --no-p --no-g --chmod=Du=rwx,Dg=rwxs,Do=rx --chmod=Fu=rw,Fg=rw,Fo=r %s -e ssh "%s" "%s"' % (excludes, source, dest))
 
     def get_operating_systems(self):
         return self._release.get_operating_systems()

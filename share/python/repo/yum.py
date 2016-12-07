@@ -34,10 +34,9 @@ default_yum_repos = {
             "el/5": ["i386", "SRPMS", "x86_64"],
             "el/6": ["i386", "SRPMS", "x86_64"],
             "el/7": ["SRPMS", "x86_64"],
-            "fedora/19":  ["i386", "SRPMS", "x86_64"],
-            "fedora/20":  ["i386", "SRPMS", "x86_64"],
-            "fedora/21":  ["i386", "SRPMS", "x86_64"],
-            "fedora/22":  ["i386", "SRPMS", "x86_64"]
+            "fedora/23":  ["i386", "SRPMS", "x86_64"],
+            "fedora/24":  ["i386", "SRPMS", "x86_64"],
+            "fedora/25":  ["i386", "SRPMS", "x86_64"]
 }
 
 
@@ -321,25 +320,26 @@ class Manager(repo.Manager):
             skip. If None, then all yum-based OSes will be managed. This is
             evaluated after os_names
         """
+        oses = dict()
         if use_cache:
             cache = Cache(cache_root) if use_cache else None
-            oses = { osname: cache.get_architectures(osname)
-                     for osname in cache.get_operating_systems() }
+            for osname in cache.get_operating_systems():
+                oses[osname] = cache.get_architectures(osname)
         else:
             cache = None
             oses = Manager.find_operating_systems(root, releases[0])
         if os_names is not None:
-            oses = {
-                osname: oses[osname]
-                for osname in oses
-                if osname in os_names
-            } 
+            new_oses = dict()
+            for osname in oses:
+                if osname in os_names:
+                    new_oses[osname] = oses[osname]
+            oses = new_oses
         if exclude_os_names is not None:
-            oses = {
-                osname: oses[osname]
-                for osname in oses 
-                if osname not in exclude_os_names
-            }
+            new_oses = dict()
+            for osname in oses:
+                if osname not in exclude_os_names:
+                    new_oses[osname] = oses[osname]
+            oses = new_oses
         yum_releases = {}
         for release in releases:
             yum_releases[release] = Release(
