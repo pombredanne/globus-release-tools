@@ -1,8 +1,13 @@
 #! /usr/bin/python
 
 import json
+import os
+import re
+import datetime
 
 class Advisories(object):
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+
     def __init__(self, initial_advisories_path=None, format="txt"):
         self.advisories = []
         self.added_packages = {}
@@ -10,7 +15,11 @@ class Advisories(object):
         if initial_advisories_path is not None:
             f = open(initial_advisories_path, "r")
             if format == 'json':
-                self.advisories = json.load(f)
+                s = f.read()
+                if s.startswith("advisories ="):
+                    s = s.replace("advisories = ", "", 1)
+                    s = s.rstrip(";\n")
+                self.advisories = json.loads(s)
             else:
                 for line in f:
                     self.parse_line(line)
@@ -63,17 +72,17 @@ class Advisories(object):
                 pfd.close()
                 if len(files) > 0:
                     obj = {
-                        "date": today,
-                        "packages": ",".join(files),
+                        "date": Advisories.today,
+                        "packages": files,
                         "toolkit_version": "6.0",
-                        "flags": "bug",
+                        "flags": ["bug"],
                         "description": changelog
                     }
                     self.advisories.append(obj)
                     self.added_packages[p.name] = obj
 
     def to_json(self):
-        return "advisories = " + json.dumps(self.advisories) + ";\n"
+        return json.dumps(self.advisories)
 
     def new_to_text(self):
         s = ""

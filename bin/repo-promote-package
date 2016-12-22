@@ -204,5 +204,5 @@ if advisories is not None:
         f.close()
     elif args.json is not None:
         f = open(args.json, "w")
-        f.write(advisories.to_json())
+        f.write("advisories = " + advisories.to_json() + ";")
         f.close()
