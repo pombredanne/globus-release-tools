@@ -31,6 +31,7 @@ sys.path.append(os.path.join(
         "python"))
 
 import repo
+import repo.advisories
 import repo.deb
 import repo.packages
 import repo.installers
@@ -82,10 +83,14 @@ parser.add_argument(
     "-a", "--advisory",
     help="Add new package changelogs to the ADVISORY file",
     default=None)
+parser.add_argument(
+    "-j", "--json",
+    help="Add new package changelogs to the JSON file",
+    default=None)
 
 args = parser.parse_args()
 os_name = None
-exclude_os_names = ["fedora/19", "fedora/20", "fedora/21", "fedora/22", "squeeze", "lucid", "utopic", "vivid", "wily", "sles/11"]
+exclude_os_names = ["fedora/19", "fedora/20", "fedora/21", "fedora/22", "fedofra/23", "squeeze", "lucid", "utopic", "vivid", "wily", "sles/11"]
 exclude_package_names = [".*mod-gridftp.*", "globus-gridftp-server-s3.*", "globus-gridftp-server-ceph.*", "globus-gridftp-server-google.*"]
 
 if args.os_name is not None:
@@ -123,7 +128,17 @@ pkg_managers['zypper'] = \
     repo.zypper.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
 
 pdict = dict()
-advisories = {}
+advisories = None
+if args.advisory is not None:
+    advpath = args.advisory
+    if advpath == "-":
+        advpath = None
+    advisories = repo.advisories.Advisories(
+            initial_advisories_path=advpath, format="txt")
+
+elif args.json is not None:
+    advisories = repo.advisories.Advisories(
+            initial_advisories_path=args.json, format="json")
 today = datetime.datetime.now().strftime("%Y-%m-%d")
 
 print("==================")
@@ -142,35 +157,8 @@ for man in pkg_managers:
             pdict[pkey] = set()
         pdict[pkey].add(p.os)
 
-    if args.advisory is not None:
-        for p in packages:
-            if p.arch == 'src' and p.name not in advisories and \
-                    ".src.rpm" in p.path:
-                pfd = os.popen('rpm -q -p "%s" --changelog' % p.path)
-                dateline = pfd.readline()
-                changelog = ""
-                for l in pfd:
-                    if l.startswith("*"):
-                        break
-                    else:
-                        if l.startswith("- "):
-                            l = l.replace("- ", "", 1)
-                        changelog += l
-                pfd.close()
-                changelog = changelog.strip().replace("\n","<br />")
-                pfd = os.popen('rpm -q -p "%s" -l' % p.path)
-                files = []
-                for l in pfd:
-                    if ".tar.gz" in l:
-                        l = l.replace(".tar.gz", "").strip()
-                        matches = re.match(l, r"([a-z-]+)(-[0-9.]+)")
-                        if matches is not None:
-                            l = matches.group(1).replace("-", "_") + \
-                                matches.group(2)
-                        files.append(l.replace(".tar.gz", "").strip())
-                pfd.close()
-                if len(files) > 0:
-                    advisories[p.name] = "%s;%s;6.0;bug;%s\n" % (today, ",".join(files), changelog)
+    if advisories is not None:
+        advisories.add_advisories(packages)
 
 if args.to_release == 'stable':
     gcs_packages = [(p) for p in pdict.keys() \
@@ -207,15 +195,14 @@ if args.package is None:
         print("==============================")
         print("\n".join([(os.path.basename(p.path) + " to " + p.os) for p in installers]))
 
-if args.advisory is not None:
-    sorted_advisories = [advisories[a] for a in advisories]
-    sorted_advisories.sort()
+if advisories is not None:
     if args.dryrun or args.advisory == '-':
-        for a in sorted_advisories:
-            print(a, end=' ')
-    else:
+        print(advisories.new_to_text(), end=' ')
+    elif args.advisory is not None:
         f = open(args.advisory, "a")
-        for a in sorted_advisories:
-            f.write(a)
+        f.write(advisories.new_to_text())
         f.close()
-
+    elif args.json is not None:
+        f = open(args.json, "w")
+        f.write(advisories.to_json())
+        f.close()
