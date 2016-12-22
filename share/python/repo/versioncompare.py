@@ -79,11 +79,14 @@ def version2float(v):
             v = __v2fhelper(v, "p2e", version, 5)
         elif "p2f" in v:
             v = __v2fhelper(v, "p2f", version, 6)
+        elif "p2g" in v:
+            v = __v2fhelper(v, "p2g", version, 7)
         elif "p2" in v:
             v = __v2fhelper(v, "p2", version, 1)
         else:
             v = __v2fhelper(v, "a",  version, 1)
             v = __v2fhelper(v, "b",  version, 2)
+            v = __v2fhelper(v, "g",  version, 7)
         v = __v2fhelper(v, "rc", version, 3)
  
         parts = v.split(".")[:4]
