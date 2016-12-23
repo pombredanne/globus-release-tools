@@ -22,6 +22,7 @@ import os.path
 import argparse
 import hashlib
 import datetime
+import mimetypes
 import threading
 import Queue
 from multiprocessing.dummy import Pool as ThreadPool
@@ -52,6 +53,7 @@ def printqueue_handler(printqueue):
     while True:
         print(printqueue.get(), end='')
         sys.stdout.flush()
+
 
 # setup the printqueue and its handler thread
 printqueue = Queue.Queue()
@@ -180,7 +182,16 @@ def s3_upload_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
 
         if message:
             printqueue.put(message)
-        s3_client.upload_file(filename, bucket_name, dest_path)
+
+        # mime_type is None if the type can't be guessed
+        # encoding is usually None, but part of the return
+        mime_type, encoding = mimetypes.guess_type(filename)
+        if mime_type is not None:
+            extra_args = {'ContentType': mime_type}
+        else:
+            extra_args = {}
+        s3_client.upload_file(filename, bucket_name, dest_path,
+                              ExtraArgs=extra_args)
 
     pool = ThreadPool(pool_size)
     pool.map(handle_file, files_in_dir(source_dir))
