@@ -53,6 +53,7 @@ def printqueue_handler(printqueue):
         print(printqueue.get(), end='')
         sys.stdout.flush()
 
+
 # setup the printqueue and its handler thread
 printqueue = Queue.Queue()
 printhandler_thread = threading.Thread(target=printqueue_handler,
@@ -141,19 +142,42 @@ def files_in_dir(start_dir):
             yield (full_fname, os.path.relpath(full_fname, fullpath))
 
 
-def s3_upload_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
-                  verbose=False, compare_method=None, pool_size=10):
+def s3_sync_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
+                verbose=False, delete=False, compare_method=None,
+                pool_size=10):
     """
     Upload a directory to an S3 bucket, under a given prefix.
     Normalizes the prefix as part of a path, so prefixes like `../` are
     dangerous, and may cause unexpected behavior.
+
+    If `delete=True`, also deletes files from the S3 bucket which are not
+    present in the source directory.
     """
+    # initialize the set of files to delete on sync, dependent on the --delete
+    # flag having been passed
+    maybe_delete = set(
+        item['Key']
+        for result in s3_client.get_paginator(
+            'list_objects_v2').paginate(
+                Bucket=bucket_name, Prefix=dest_prefix)
+        for item in result.get('Contents', []))
+
+    # setup the undelete queue to be a threadsafe container for items which we
+    # do not want to delete (i.e. uploader threads can touch it safely)
+    # because this does not require any kind of liveness, it doesn't need a
+    # fancy thread wrapping it like the printqueue
+    undelete_queue = Queue.Queue()
+
     def handle_file(args):
         filename, relpath = args
 
         # important! normalize this path because it will be used as an S3
         # prefix, so things like `/./` will be preserved!
         dest_path = os.path.normpath(os.path.join(dest_prefix, relpath))
+
+        # put the dest path into the undelete queue -- make sure we don't
+        # delete objects we just uploaded
+        undelete_queue.put(dest_path)
 
         message = ""
 
@@ -185,6 +209,25 @@ def s3_upload_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
     pool = ThreadPool(pool_size)
     pool.map(handle_file, files_in_dir(source_dir))
 
+    def delete_s3file(key):
+        if verbose:
+            printqueue.put('sync-delete from S3: {}\n'.format(key))
+        if dry_run:
+            return
+        s3_client.delete_object(Bucket=bucket_name, Key=key)
+
+    # pool.map joins the threads, so now we can do the delete operation(s)
+    if delete:
+        # start by walking the undelete queue and getting items to remove
+        # from the deletion set
+        while not undelete_queue.empty():
+            relpath = undelete_queue.get()
+            maybe_delete.discard(relpath)
+
+        # run a new threadpool to do the deletes
+        pool = ThreadPool(pool_size)
+        pool.map(delete_s3file, maybe_delete)
+
 
 def parse_args():
     repo = import_repo()
@@ -207,6 +250,11 @@ def parse_args():
         "-d", "--dryrun",
         help="Display packages that would be copied, but don't actually " +
              "execute the copy [False]",
+        action='store_true')
+    parser.add_argument(
+        "--delete",
+        help="Delete files in the destination dir (under the S3 prefix) "
+             "which are not in the source dir [False]",
         action='store_true')
     parser.add_argument(
         "-v", "--verbose",
@@ -245,10 +293,10 @@ def main():
 
     printqueue.put("Uploading {0} to s3://{1}/{2}\n"
                    .format(source_dir, args.s3_bucket, upload_prefix))
-    s3_upload_dir(source_dir, args.s3_bucket, upload_prefix,
-                  dry_run=args.dryrun, verbose=args.verbose,
-                  compare_method=args.compare_method,
-                  pool_size=args.pool_size)
+    s3_sync_dir(source_dir, args.s3_bucket, upload_prefix,
+                dry_run=args.dryrun, verbose=args.verbose,
+                delete=args.delete, compare_method=args.compare_method,
+                pool_size=args.pool_size)
 
 
 if __name__ == '__main__':

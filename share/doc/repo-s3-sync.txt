@@ -45,6 +45,9 @@ OPTIONS
     Subdirectory of *ROOT* to sync instead of full *ROOT*
 *-d, --dryrun*::
     Display files that would be copied, but don't actually execute the copy
+*--delete*::
+    Do a sync-delete operation, removing files not in the source dir after
+    uploading is complete. Recommend using *--verbose* with this flag
 *-v, --verbose*::
     Be verbose about checks and uploads, list every file
 *--s3-bucket BUCKETNAME*::
