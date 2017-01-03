@@ -2,12 +2,12 @@
 .\"     Title: repo-s3-sync
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 11/11/2016
+.\"      Date: 12/27/2016
 .\"    Manual: Globus Toolkit Manual
 .\"    Source: globus-release-tools
 .\"  Language: English
 .\"
-.TH "REPO\-S3\-SYNC" "1" "11/11/2016" "globus\-release\-tools" "Globus Toolkit Manual"
+.TH "REPO\-S3\-SYNC" "1" "12/27/2016" "globus\-release\-tools" "Globus Toolkit Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -66,6 +66,13 @@ to sync instead of full
 \fB\-d, \-\-dryrun\fR
 .RS 4
 Display files that would be copied, but don\(cqt actually execute the copy
+.RE
+.PP
+\fB\-\-delete\fR
+.RS 4
+Do a sync\-delete operation, removing files not in the source dir after uploading is complete\&. Recommend using
+\fB\-\-verbose\fR
+with this flag
 .RE
 .PP
 \fB\-v, \-\-verbose\fR
