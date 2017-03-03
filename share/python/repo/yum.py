@@ -208,7 +208,10 @@ class Repository(repo.Repository):
             self.dirty = False
 
     def __createrepo(self):
-        os.system('createrepo -d "%s"' % (self.repo_path))
+        if '/el/5' in self.repo_path:
+            os.system('createrepo -d "%s" -s sha' % (self.repo_path))
+        else:
+            os.system('createrepo -d "%s"' % (self.repo_path))
         
 class Release(repo.Release):
     """
