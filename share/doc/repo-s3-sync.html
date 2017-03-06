@@ -24,6 +24,11 @@ used with <span class="strong"><strong>--pool-size</strong></span></p></div><div
 </span></dt><dd>
     Display files that would be copied, but don’t actually execute the copy
 </dd><dt><span class="term">
+<span class="strong"><strong>--delete</strong></span>
+</span></dt><dd>
+    Do a sync-delete operation, removing files not in the source dir after
+    uploading is complete. Recommend using <span class="strong"><strong>--verbose</strong></span> with this flag
+</dd><dt><span class="term">
 <span class="strong"><strong>-v, --verbose</strong></span>
 </span></dt><dd>
     Be verbose about checks and uploads, list every file
@@ -31,6 +36,12 @@ used with <span class="strong"><strong>--pool-size</strong></span></p></div><div
 <span class="strong"><strong>--s3-bucket BUCKETNAME</strong></span>
 </span></dt><dd>
     Sync to <span class="strong"><strong>BUCKETNAME</strong></span>, defaults to <code class="literal">downloads.globus.org</code>
+</dd><dt><span class="term">
+<span class="strong"><strong>--s3-path PATH</strong></span>
+</span></dt><dd>
+    Path prefix to use in <span class="strong"><strong>BUCKETNAME</strong></span>, defaults to <code class="literal">toolkit/gt6</code>
+    Will have <code class="literal">data/</code> prepended, as all writes to the S3 bucket go into the
+    <code class="literal">data/</code> namespace
 </dd><dt><span class="term">
 <span class="strong"><strong>--compare-method METHOD</strong></span>
 </span></dt><dd>

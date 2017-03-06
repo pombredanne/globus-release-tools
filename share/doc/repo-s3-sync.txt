@@ -52,6 +52,10 @@ OPTIONS
     Be verbose about checks and uploads, list every file
 *--s3-bucket BUCKETNAME*::
     Sync to *BUCKETNAME*, defaults to +downloads.globus.org+
+*--s3-path PATH*::
+    Path prefix to use in *BUCKETNAME*, defaults to +toolkit/gt6+
+    Will have +data/+ prepended, as all writes to the S3 bucket go into the
+    +data/+ namespace
 *--compare-method METHOD*::
     How to compare files against S3. One of 'checksum', 'size', 'modified'
     (i.e. mtime vs. S3 modified time), 'nocheck'. Defaults to 'checksum'

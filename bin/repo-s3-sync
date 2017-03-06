@@ -254,7 +254,8 @@ def parse_args():
     parser.add_argument(
         "--subdir",
         help=("Subdir of the root which we want to copy. Defaults to the "
-              "whole root dir"),
+              "whole root dir. Also joined to the dest path to specify the "
+              "matching subdir on the destination"),
         default=None)
     parser.add_argument(
         "-d", "--dryrun",
@@ -275,6 +276,10 @@ def parse_args():
         help=("The bucket into which to copy files [downloads.globus.org]"),
         default='downloads.globus.org')
     parser.add_argument(
+        "--s3-path",
+        help=("The dest path into which to copy files [toolkit/gt6]"),
+        default='toolkit/gt6')
+    parser.add_argument(
         "--compare-method",
         help=("The method by which local files and S3 objects are compared in "
               "order to determine whether or not to upload [checksum]"),
@@ -293,7 +298,7 @@ def main():
 
     # for clarity's sake: this does not need to have a trailing slash, but it
     # will be treated as a dirname on the destination
-    upload_prefix = 'data/toolkit/gt6'
+    upload_prefix = os.path.join('data/', args.s3_path)
 
     source_dir = args.root
 
