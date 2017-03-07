@@ -221,7 +221,7 @@ def s3_sync_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
 
     def delete_s3file(key):
         if verbose:
-            printqueue.put('sync-delete from S3: {}\n'.format(key))
+            printqueue.put('sync-delete from S3: {0}\n'.format(key))
         if dry_run:
             return
         s3_client.delete_object(Bucket=bucket_name, Key=key)
