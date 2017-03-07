@@ -34,7 +34,6 @@ default_yum_repos = {
             "el/5": ["i386", "SRPMS", "x86_64"],
             "el/6": ["i386", "SRPMS", "x86_64"],
             "el/7": ["SRPMS", "x86_64"],
-            "fedora/23":  ["i386", "SRPMS", "x86_64"],
             "fedora/24":  ["i386", "SRPMS", "x86_64"],
             "fedora/25":  ["i386", "SRPMS", "x86_64"]
 }

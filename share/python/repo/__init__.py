@@ -364,26 +364,28 @@ class Manager(object):
         # those in the to_release
         src_candidates = [src_info for src_info in from_release.get_packages(
                     name=self.package_name(name), os=os, version=version,
-                    arch='src',
                     newest_only=True)]
 
         result = []
+        seen = {}
         to_release_object = self.get_release(to_release)
         # For each package found above, find source and binaries in
         # from_release and copy them over if they are not in to_release
         for src in src_candidates:
-            for package in from_release.get_packages(source=src):
-                skip = False
-                if exclude_package_names is not None:
-                    for exclude in exclude_package_names:
-                        if re.match(exclude, package.name) is not None:
-                            skip = True
-                            break
-                if (not skip) and to_release_object.is_newer(package):
-                    if not dryrun:
-                        to_release_object.add_package(package,
-                                update_metadata=False)
-                    result.append(package)
+            if src.name not in seen:
+                seen[src.name] = True
+                for package in from_release.get_packages(source=src):
+                    skip = False
+                    if exclude_package_names is not None:
+                        for exclude in exclude_package_names:
+                            if re.match(exclude, package.name) is not None:
+                                skip = True
+                                break
+                    if (not skip) and to_release_object.is_newer(package):
+                        if not dryrun:
+                            to_release_object.add_package(package,
+                                    update_metadata=False)
+                        result.append(package)
 
         if not dryrun:
             to_release_object.update_metadata()
