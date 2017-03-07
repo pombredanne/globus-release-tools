@@ -201,7 +201,8 @@ def s3_sync_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
 
         # do the upload
         if verbose:
-            message += "Confirmed, uploading {0}\n".format(filename)
+            message += "Confirmed, uploading {0} to {1}\n".format(
+                filename, dest_path)
 
         if message:
             printqueue.put(message)
