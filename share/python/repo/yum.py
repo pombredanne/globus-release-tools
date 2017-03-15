@@ -21,8 +21,10 @@ import fnmatch
 import gzip
 import os
 import os.path
+import re
 import shutil
 import sqlite3
+from subprocess import Popen, PIPE
 
 import repo
 import repo.package
@@ -163,6 +165,13 @@ class Repository(repo.Repository):
                     os.chmod(dirname, 0o2775)
                     dirname = os.path.dirname(dirname)
 
+        out,err = Popen(['createrepo', '--version'], stdout=PIPE).communicate()
+        matches = re.search(r"(\d+).(\d+).(\d+)", out)
+        if int(matches.group(1)) >= 1 or int(matches.group(2)) >= 9:
+            self.use_sha_arg = True
+        else:
+            self.use_sha_arg = False
+
         try:
             primary_path = Repository.__get_primary_path(self.repo_path, xml)
         except:
@@ -207,7 +216,7 @@ class Repository(repo.Repository):
             self.dirty = False
 
     def __createrepo(self):
-        if '/el/5' in self.repo_path:
+        if '/el/5' in self.repo_path and self.use_sha_arg:
             os.system('createrepo -d "%s" -s sha' % (self.repo_path))
         else:
             os.system('createrepo -d "%s"' % (self.repo_path))

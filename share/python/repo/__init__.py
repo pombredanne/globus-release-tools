@@ -372,8 +372,8 @@ class Manager(object):
         # For each package found above, find source and binaries in
         # from_release and copy them over if they are not in to_release
         for src in src_candidates:
-            if src.name not in seen:
-                seen[src.name] = True
+            if src.source_name not in seen:
+                seen[src.source_name] = True
                 for package in from_release.get_packages(source=src):
                     skip = False
                     if exclude_package_names is not None:
