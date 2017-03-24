@@ -106,7 +106,7 @@ def update_yum_dest(root=default_root, cache=default_cache):
 
 
 def sync_tree(root=default_root, cache=default_cache):
-    os.system('rsync -a --ignore-errors -e ssh builds.globus.org:/var/www/html/repo6/ "%s"' % (cache))
+    os.system('rsync -a --ignore-errors -e ssh builds.globus.org:/var/www/html/gt6/unstable/ "%s"' % (cache))
     for dirpath, _, filenames in os.walk(os.path.join(cache, "packages")):
         for fn in filenames:
             if fnmatch.fnmatch(fn, "*.changes") or fnmatch.fnmatch(fn, "*.rpm"):

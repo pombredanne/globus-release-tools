@@ -271,12 +271,12 @@ class Cache(object):
         return os.path.join(self._cache_dir, self._cache_subdir)
 
     def sync(self):
-        source = "builds.globus.org:/var/www/html/repo6/"
+        source = "builds.globus.org:/var/www/html/gt6/unstable/"
         if os.uname()[1] == "builds.globus.org":
-            if self._cache_dir == "/var/www/html/repo6":
+            if self._cache_dir == "/var/www/html/gt6/unstable":
                 return
             else:
-                source = "/var/www/html/repo6/"
+                source = "/var/www/html/gt6/unstable/"
         dest = self._cache_dir
         if self._cache_subdir is not None:
             source += self._cache_subdir + "/"
