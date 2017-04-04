@@ -61,7 +61,7 @@ def version2float(v):
                 letterval = ord(m.group(5)) - ord('a') + 1
                 ver += float(letterval) / 100000000000000.
     else:
-        m = re.search(r'p(\d+)([a-z])', v)
+        m = re.search(r'p(\d+)([a-z])?', v)
         if ".beta" in v:
             v = __v2fhelper(v, ".beta", version, 2)
         elif "beta" in v:
@@ -71,9 +71,12 @@ def version2float(v):
         elif "BETA" in v:
             v = __v2fhelper(v, "BETA", version, 2)
         elif m is not None:
-            v = __v2fhelper(
-                v, m.group(0), version, 1 + ord(m.group(2)) - ord('a'))
-            v = __v2fhelper(v, "p2b", version, 2)
+            if m.group(2) is not None:
+                v = __v2fhelper(
+                    v, m.group(0), version, 1 + ord(m.group(2)) - ord('a'))
+            else:
+                v = __v2fhelper(
+                    v, m.group(0), version, 0)
         elif "p2" in v:
             v = __v2fhelper(v, "p2", version, 1)
         else:
