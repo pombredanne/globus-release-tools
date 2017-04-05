@@ -97,7 +97,7 @@ def s3_mtime(bucket, key):
         return None
 
 
-def compare_dispatch(method, filename, bucket_name, dest_path):
+def compare_dispatch(method, filename, bucket_name, dest_path, since):
     """
     Returns True if things match and the file should not be uploaded
     Returns False if the file should be uploaded
@@ -118,10 +118,16 @@ def compare_dispatch(method, filename, bucket_name, dest_path):
         # also, be careful and normalize to TZ naive dates
         local_mtime = datetime.datetime.fromtimestamp(
             os.stat(filename).st_mtime).replace(tzinfo=None)
-        s3_time = s3_mtime(bucket_name, dest_path)
-        if s3_time is None:
-            return False
-        return local_mtime <= s3_time.replace(tzinfo=None)
+
+        if since is not None:
+            compare_mtime = datetime.datetime.fromtimestamp(
+                float(since)).replace(tzinfo=None)
+        else:
+            s3_time = s3_mtime(bucket_name, dest_path)
+            if s3_time is None:
+                return False
+            compare_mtime = s3_time.replace(tzinfo=None)
+        return local_mtime <= compare_mtime
     elif method == "nocheck":
         return False
     # just in case...
@@ -145,6 +151,7 @@ def files_in_dir(start_dir):
 
 def s3_sync_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
                 verbose=False, delete=False, compare_method=None,
+                since=None,
                 pool_size=10):
     """
     Upload a directory to an S3 bucket, under a given prefix.
@@ -156,12 +163,13 @@ def s3_sync_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
     """
     # initialize the set of files to delete on sync, dependent on the --delete
     # flag having been passed
-    maybe_delete = set(
-        item['Key']
-        for result in s3_client.get_paginator(
-            'list_objects_v2').paginate(
-                Bucket=bucket_name, Prefix=dest_prefix)
-        for item in result.get('Contents', []))
+    if delete:
+        maybe_delete = set(
+            item['Key']
+            for result in s3_client.get_paginator(
+                'list_objects_v2').paginate(
+                    Bucket=bucket_name, Prefix=dest_prefix)
+            for item in result.get('Contents', []))
 
     # setup the undelete queue to be a threadsafe container for items which we
     # do not want to delete (i.e. uploader threads can touch it safely)
@@ -191,7 +199,7 @@ def s3_sync_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
             printqueue.put(message)
             return
 
-        if compare_dispatch(compare_method, filename, bucket_name, dest_path):
+        if compare_dispatch(compare_method, filename, bucket_name, dest_path, since):
             if verbose:
                 message += (("No upload for {0}: comparison of type "
                              "\"{1}\" passed\n")
@@ -287,6 +295,11 @@ def parse_args():
         choices=['checksum', 'size', 'modified', 'nocheck'],
         default='checksum')
     parser.add_argument(
+        "--since",
+        help=("Compare file change times with SINCE instead of the "
+              "s3 timestamp"),
+        default=None),
+    parser.add_argument(
         "--pool-size",
         help="Number of threads to use to speed IO [100]",
         type=int, default=100)
@@ -312,6 +325,7 @@ def main():
     s3_sync_dir(source_dir, args.s3_bucket, upload_prefix,
                 dry_run=args.dryrun, verbose=args.verbose,
                 delete=args.delete, compare_method=args.compare_method,
+                since=args.since,
                 pool_size=args.pool_size)
 
 
