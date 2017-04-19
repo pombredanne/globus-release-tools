@@ -83,7 +83,7 @@ parser.add_argument(
     action='store_true')
 
 args = parser.parse_args()
-exclude_os_names = ["fedora/19", "fedora/20", "fedora/21", "fedora/22", "fedora/23", "squeeze", "lucid", "utopic", "vivid", "wily" ]
+exclude_os_names = ["el/5", "fedora/19", "fedora/20", "fedora/21", "fedora/22", "fedora/23", "squeeze", "lucid", "utopic", "vivid", "wily" ]
 if args.exclude_os_name is not None:
     exclude_os_names.extend(args.exclude_os_name.split(","))
 
