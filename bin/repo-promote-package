@@ -90,7 +90,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 os_name = None
-exclude_os_names = ["el/5", "fedora/19", "fedora/20", "fedora/21", "fedora/22", "fedofra/23", "squeeze", "lucid", "utopic", "vivid", "wily", "sles/11"]
+exclude_os_names = ["el/5", "fedora/19", "fedora/20", "fedora/21", "fedora/22", "fedofra/23", "precise", "squeeze", "lucid", "utopic", "vivid", "wily", "sles/11"]
 exclude_package_names = [".*mod-gridftp.*", "globus-gridftp-server-google.*"]
 
 if args.os_name is not None:

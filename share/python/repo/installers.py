@@ -42,13 +42,22 @@ class InstallerInfo(object):
         self.artifact_patterns = artifact_patterns
         self.package_re = package_re
         self.link = link
+        self.reponame = subdir
+        if "32-CYGWIN" in name:
+            self.reponame = "cygwin32"
+        elif "32-MINGW" in name:
+            self.reponame = "mingw32"
+        elif "64-CYGWIN" in name:
+            self.reponame = "cygwin64"
+        elif "64-MINGW" in name:
+            self.reponame = "mingw64"
 
 class Repository(repo.packages.Repository):
     def __init__(self, topdir, installer_info):
         self.installer_info = installer_info
         super(Repository, self).__init__(
                 os.path.join(topdir, installer_info.subdir),
-                installer_info.name, installer_info.package_re)
+                installer_info.reponame, installer_info.package_re)
 
     def add_package(self, package, update_metadata=False):
         new_package = super(Repository, self).add_package(package,
@@ -71,7 +80,7 @@ class Release(repo.Release):
     def __init__(self, topdir, name, installer_infos):
         repositories = {}
         for i in installer_infos:
-            repositories[i.name] = Repository(topdir, i)
+            repositories[i.reponame] = Repository(topdir, i)
         super(Release, self).__init__(name, repositories)
 
     def repositories_for_os_arch(self, osname, arch):
@@ -182,7 +191,7 @@ class Manager(repo.Manager):
     promoted to the release tree.
     """
     def __init__(self, cache_root=repo.default_cache, root=repo.default_root,
-            use_cache=True):
+            use_cache=True, releases=repo.default_releases):
         """
         Constructor
         -----------
@@ -199,17 +208,19 @@ class Manager(repo.Manager):
         """
         cache = Cache(cache_root) if use_cache else None
 
-        release = {"release": Release(
-                    os.path.join(root, 'installers'),
-                    "release",
-                    cache.installers)}
+        release = {}
+        for r in releases:
+            release[r] = Release(
+                os.path.join(root, r, 'installers'),
+                r,
+                cache.installers)
         super(Manager, self).__init__(cache, release)
 
     def get_release(self, releasename):
         if releasename == 'cache':
             return self.cache.release
         else:
-            return self.releases['release']
+            return self.releases[releasename]
 
     def __str__(self):
         return " ".join(["Installers Manager [", ",".join(self.releases.keys()), "]"])
