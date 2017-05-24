@@ -74,16 +74,16 @@ print("====================")
 pkg_managers = dict()
 if args.type == 'deb':
     print("Parsing deb")
-    pkg_managers['deb'] = \
-        repo.deb.Manager(root=args.root, releases=[args.release], use_cache=False)
+    pkg_managers['deb'] = repo.deb.Manager(
+        root=args.root, releases=[args.release])
 if args.type == 'yum':
     print("Parsing yum")
-    pkg_managers['yum'] = \
-        repo.yum.Manager(root=args.root, releases=[args.releases], use_cache=False)
+    pkg_managers['yum'] = repo.yum.Manager(
+        root=args.root, releases=[args.releases])
 if args.type == 'zypper':
     print("Parsing zypper")
-    pkg_managers['zypper'] = \
-        repo.zypper.Manager(root=args.root, releases=[args.release], use_cache=False)
+    pkg_managers['zypper'] = repo.zypper.Manager(
+        root=args.root, releases=[args.release])
 
 pdict = dict()
 advisories = {}

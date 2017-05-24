@@ -19,7 +19,6 @@ Package to manage Globus Toolkit Zypper repositories
 from __future__ import print_function
 
 import datetime
-import fnmatch
 import hashlib
 import os
 import os.path
@@ -33,12 +32,13 @@ List of supported Zypper-based Linux distributions
 """
 default_zypper_distros = ["sles/11"]
 
+
 class Repository(repo.Repository):
     """
     Repository class
     ================
     This class contains the zypper package repository metadata for a particular
-    operating system version. 
+    operating system version.
     """
     grp_restring = r"=Grp:[\t ]*(?P<group>.*)\n"
     lic_restring = r"=Lic:[\t ]*(?P<license>.*)\n"
@@ -57,7 +57,22 @@ class Repository(repo.Repository):
     dashd_restring = r"##[\t ]+-d.*\n"
     start_restring = r"##-+\n"
 
-    parse_re = re.compile(ver_restring + "|" + start_restring + "(" + "|".join([grp_restring, lic_restring, loc_restring, pkg_restring, shr_restring, siz_restring, src_restring, tim_restring, con_restring, obs_restring, prq_restring, prv_restring, req_restring, dashd_restring]) + ")+", re.M)
+    parse_re = re.compile(
+        ver_restring + "|" + start_restring + "(" + "|".join([
+            grp_restring,
+            lic_restring,
+            loc_restring,
+            pkg_restring,
+            shr_restring,
+            siz_restring,
+            src_restring,
+            tim_restring,
+            con_restring,
+            obs_restring,
+            prq_restring,
+            prv_restring,
+            req_restring,
+            dashd_restring]) + ")+", re.M)
 
     def __init__(self, repo_path, osname):
         super(Repository, self).__init__()
@@ -68,7 +83,7 @@ class Repository(repo.Repository):
                 self.repo_path, "setup", "descr", "packages")
 
         if not os.path.exists(self.packages_path):
-            self.update_metadata(force=True);
+            self.update_metadata(force=True)
 
         f = file(self.packages_path, "r")
         metadata = f.read()
@@ -83,9 +98,10 @@ class Repository(repo.Repository):
             if m is not None and m.group('pkgname') is not None:
                 srcref = None
                 if m.group('arch') == 'src':
-                    srcref = "-".join([m.group('pkgname'),
-                            m.group('pkgversion'),
-                            m.group('pkgrelease')])
+                    srcref = "-".join([
+                        m.group('pkgname'),
+                        m.group('pkgversion'),
+                        m.group('pkgrelease')])
                 else:
                     srcref = "-".join([
                                 m.group('srcname'),
@@ -95,8 +111,11 @@ class Repository(repo.Repository):
                         m.group('pkgname'),
                         m.group('pkgversion'),
                         m.group('pkgrelease'),
-                        os.path.join(self.repo_path, "RPMS", m.group('arch'),
-                                m.group('location')),
+                        os.path.join(
+                            self.repo_path,
+                            "RPMS",
+                            m.group('arch'),
+                            m.group('location')),
                         m.group('arch'),
                         srcref,
                         self.os)
@@ -107,11 +126,14 @@ class Repository(repo.Repository):
             self.packages[p].sort()
 
     def add_package(self, package, update_metadata=False):
-        dest_rpm_path = os.path.join(self.repo_path,
-            'RPMS', package.arch, os.path.basename(package.path))
+        dest_rpm_path = os.path.join(
+            self.repo_path,
+            'RPMS',
+            package.arch,
+            os.path.basename(package.path))
         if not os.path.exists(dest_rpm_path):
             shutil.copy(package.path, dest_rpm_path)
-        if not package.name in self.packages:
+        if package.name not in self.packages:
             self.packages[package.name] = []
 
         # Create a new repo.package.Metadata with the new path
@@ -130,7 +152,7 @@ class Repository(repo.Repository):
         else:
             self.dirty = True
         return new_package
-        
+
     def update_metadata(self, force=False):
         """
         Update the zypper repository metadata for the packages in the specified
@@ -143,7 +165,7 @@ class Repository(repo.Repository):
         distro_repodir = self.repo_path
 
         print("Updating metadata in ", distro_repodir)
-        dirs = ["media.1", "RPMS/noarch", "RPMS/src", "RPMS/x86_64" ]
+        dirs = ["media.1", "RPMS/noarch", "RPMS/src", "RPMS/x86_64"]
         for dirname in [(os.path.join(distro_repodir, x)) for x in dirs]:
             if not os.path.exists(dirname):
                 os.makedirs(dirname, 0o775)
@@ -157,8 +179,9 @@ class Repository(repo.Repository):
 
         if not os.path.exists(media_path):
             media_file = file(media_path, "w")
-            media_file.write("Globus Support\n%s\n1\n" %
-                    (datetime.datetime.now().strftime("%Y%m%d%H%M%S")))
+            media_file.write(
+                "Globus Support\n%s\n1\n" %
+                (datetime.datetime.now().strftime("%Y%m%d%H%M%S")))
             media_file.close()
         content_key_path = os.path.join(distro_repodir, "content.key")
         if not os.path.exists(content_key_path):
@@ -183,7 +206,6 @@ DATADIR RPMS
             directory_yast_file.write(entry + "\n")
         directory_yast_file.close()
 
-        rpms_path = os.path.join(distro_repodir, "RPMS")
         os.system('cd "%s"; create_package_descr -d "RPMS"' % (distro_repodir))
 
         descr_dir = os.path.join(distro_repodir, "setup", "descr")
@@ -206,7 +228,7 @@ DATADIR RPMS
             os.remove(content_asc)
         if os.getenv("GPG_AGENT_INFO") is not None:
             os.system("cd \"%s\"; gpg --batch --use-agent -ab content" %
-                (distro_repodir))
+                      (distro_repodir))
         else:
             os.system("cd \"%s\"; gpg -ab content" % (distro_repodir))
 
@@ -239,44 +261,18 @@ class Release(repo.Release):
         else:
             return []
 
-class Cache(repo.Cache):
-    """
-    Cache
-    =====
-    The repo.zypper.Cache object manages a mirror of the builds.globus.org
-    "rpm/sles" subdirectory. This mirror contains a repo.zypper.Distro() for
-    each operating system/version in the cache. These Distro objects can be used
-    to promote packages to the various trees in a DistroPoint
-    """
-    def __init__(self, cache):
-        self.cache_dir = cache
-        super(Cache, self).__init__(cache, "rpm", ['el', 'fedora'])
-        self.sync()
-
-        osname = 'sles'
-        osdir = os.path.join(cache, 'rpm', osname)
-        cached_repos = []
-
-        for osver in os.listdir(osdir):
-            this_repo_topdir = os.path.join(osdir, osver)
-            if os.path.isdir(this_repo_topdir) and not \
-                    os.path.islink(this_repo_topdir):
-                this_repo_name = os.path.join(osname, osver)
-                cached_repos.append(this_repo_name)
-        self.release = Release("cache", os.path.join(cache, "rpm"),
-                cached_repos)
 
 class Manager(repo.Manager):
     """
     Package Manager
     ===============
-    The repo.zypper.Manager object manages the packages in a cache and release
-    tree. New packages from the cache (including new repositories) can be
+    The repo.zypper.Manager object manages the packages in a release
+    tree. New packages from the repositories can be
     promoted to any of the released package trees via methods in this class
     """
-    def __init__(self, cache_root=repo.default_cache, root=repo.default_root,
-            releases=repo.default_releases, use_cache=True, os_names=None,
-            exclude_os_names=None):
+    def __init__(self, root=repo.default_root,
+                 releases=repo.default_releases, os_names=None,
+                 exclude_os_names=None):
         """
         Constructor
         -----------
@@ -284,14 +280,10 @@ class Manager(repo.Manager):
 
         Parameters
         ----------
-        *cache_root*::
-            Root of the cache to manage
         *root*::
             Root of the release trees
         *releases*::
             Names of the releases within the release trees
-        *use_cache*::
-            (Optional) Parse packages in the cache
         *os_names*::
             (Optional) List of operating system name/version (e.g. sles/11) to
             manage. If None, then all zypper-based OSes will be managed.
@@ -300,24 +292,22 @@ class Manager(repo.Manager):
             skip. If None, then all zypper-based OSes will be managed. This is
             evaluated after os_names
         """
-        if use_cache:
-            cache = Cache(cache_root) if use_cache else None
-            oses = [osname for osname in cache.get_operating_systems()]
-        else:
-            cache = None
-            oses = Manager.find_operating_systems(root, releases[0])
+        oses = Manager.find_operating_systems(root, releases[0])
 
         if os_names is not None:
             oses = [osname for osname in oses if osname in os_names]
         if exclude_os_names is not None:
-            oses = [osname for osname in oses if osname not in exclude_os_names]
+            oses = [
+                osname for osname in oses
+                if osname not in exclude_os_names
+            ]
         zypper_releases = {}
         for release in releases:
             zypper_releases[release] = Release(
                     release,
                     os.path.join(root, release, 'rpm'),
                     oses)
-        super(Manager, self).__init__(cache, zypper_releases)
+        super(Manager, self).__init__(zypper_releases)
 
     @staticmethod
     def find_operating_systems(root, release):
@@ -327,12 +317,13 @@ class Manager(repo.Manager):
 
         for osver in os.listdir(sles_top_dir):
             osnameverdir = os.path.join(sles_top_dir, osver)
-            if os.path.isdir(osnameverdir) and not os.path.islink(osnameverdir):
+            if (os.path.isdir(osnameverdir)
+                    and not os.path.islink(osnameverdir)):
                 osnamever = os.path.join("sles", osver)
                 oses.append(osnamever)
-    
         return oses
 
     def __str__(self):
-        return " ".join(["Zypper Manager [", ",".join(self.releases.keys()), "]"])
+        return " ".join(
+            ["Zypper Manager [", ",".join(self.releases.keys()), "]"])
 # vim: filetype=python:

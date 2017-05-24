@@ -5,6 +5,7 @@ import os
 import re
 import datetime
 
+
 class Advisories(object):
     today = datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -24,7 +25,6 @@ class Advisories(object):
                 for line in f:
                     self.parse_line(line)
             f.close()
-
 
     def parse_line(self, line):
         line = line.strip()
@@ -48,7 +48,7 @@ class Advisories(object):
             if p.arch == 'src' and p.name not in self.added_packages and \
                     ".src.rpm" in p.path:
                 pfd = os.popen('rpm -q -p "%s" --changelog' % p.path)
-                dateline = pfd.readline()
+                pfd.readline()              # Date line
                 changelog = ""
                 for l in pfd:
                     if l.startswith("*"):
@@ -58,7 +58,7 @@ class Advisories(object):
                             l = l.replace("- ", "", 1)
                         changelog += l
                 pfd.close()
-                changelog = changelog.strip().replace("\n","<br />")
+                changelog = changelog.strip().replace("\n", "<br />")
                 pfd = os.popen('rpm -q -p "%s" -l' % p.path)
                 files = []
                 for l in pfd:
@@ -88,7 +88,7 @@ class Advisories(object):
         s = ""
         for k in self.added_packages:
             a = self.added_packages[k]
-            date = a['date'];
+            date = a['date']
             pkgs = " ".join(a['packages'])
             toolkit_version = a['toolkit_version']
             flags = " ".join(a['flags'])
@@ -98,9 +98,9 @@ class Advisories(object):
         return s
 
     def to_text(self):
-        s = "";
+        s = ""
         for a in self.advisories:
-            date = a['date'];
+            date = a['date']
             pkgs = " ".join(a['packages'])
             toolkit_version = a['toolkit_version']
             flags = " ".join(a['flags'])

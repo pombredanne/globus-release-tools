@@ -16,7 +16,6 @@
 Package to manage the Globus Toolkit Debian repositories
 """
 
-import fnmatch
 import gzip
 import os
 import os.path
@@ -24,14 +23,15 @@ import re
 import repo
 import repo.package
 
-default_codenames = [ 'squeeze', 'wheezy', 'lucid', 'precise', 'trusty' ]
+default_codenames = ['squeeze', 'wheezy', 'lucid', 'precise', 'trusty']
 default_arches = ['i386', 'amd64', 'source']
 codename_re = re.compile(r"Codename:\s*(\S+)")
 distro_re = re.compile(r"Distribution:\s*(\S+)")
 
+
 class Repository(repo.Repository):
     """
-    repo.deb.Repository 
+    repo.deb.Repository
     ===================
     This class contains the debian package repository metadata. It extends the
     repo.Repository class with support code to parse debian package metadata
@@ -48,14 +48,14 @@ class Repository(repo.Repository):
         distdir = os.path.join(repo_path, "dists", codename)
 
         if not os.path.exists(distdir):
-            self.update_metadata(True);
+            self.update_metadata(True)
 
-        packages_file = os.path.join(distdir, "contrib", "binary-%s" %(arch), "Packages.gz")
+        packages_file = os.path.join(
+            distdir, "contrib", "binary-%s" % (arch), "Packages.gz")
 
         if arch == 'source' or arch == 'all':
-            packages_file = os.path.join(distdir, "contrib", arch, "Sources.gz")
-
-        pkg = None
+            packages_file = os.path.join(
+                distdir, "contrib", arch, "Sources.gz")
 
         pf = gzip.open(packages_file)
 
@@ -64,7 +64,6 @@ class Repository(repo.Repository):
         version = None
         release = None
         filename = None
-        directory = None
         pkgarch = None
 
         for line in pf:
@@ -75,11 +74,9 @@ class Repository(repo.Repository):
             elif line.startswith("Source: "):
                 source = line.split(": ", 1)[1]
             elif line.startswith("Version: "):
-                version, release = line.strip().split(": ")[1].split("-",1)
+                version, release = line.strip().split(": ")[1].split("-", 1)
             elif line.startswith("Filename: "):
-                filename =  line.split(": ", 1)[1]
-            elif line.startswith("Directory: "):
-                directory =  line.split(": ", 1)[1]
+                filename = line.split(": ", 1)[1]
             elif line.startswith("Architecture: "):
                 pkgarch = line.split(": ", 1)[1]
             elif line == "":
@@ -89,7 +86,7 @@ class Repository(repo.Repository):
                 if arch == 'source':
                     src = name + "_" + version
                     suffix = "source"
-                    filename = "%s-%s_%s.changes" %(src, release, suffix)
+                    filename = "%s-%s_%s.changes" % (src, release, suffix)
                     poolsubdir = filename[0:1]
                     if filename.startswith("lib"):
                         poolsubdir = filename[0:4]
@@ -110,7 +107,7 @@ class Repository(repo.Repository):
                                 self.codename))
                     if pkgarch == 'all':
                         suffix = "all"
-                        filename = "%s-%s_%s.changes" %(src, release, suffix)
+                        filename = "%s-%s_%s.changes" % (src, release, suffix)
                         poolsubdir = filename[0:1]
                         if filename.startswith("lib"):
                             poolsubdir = filename[0:4]
@@ -133,10 +130,13 @@ class Repository(repo.Repository):
                         source = name
                     src = source + "_" + version
 
-                    archcands = [pkgarch, "all+"+pkgarch, "source+"+pkgarch, "source+all+"+pkgarch]
+                    archcands = [
+                        pkgarch, "all+"+pkgarch,
+                        "source+" + pkgarch, "source+all+" + pkgarch]
                     filepath = ""
                     for archcand in archcands:
-                        changesfile = "%s-%s_%s.changes" %(src, release, archcand)
+                        changesfile = "%s-%s_%s.changes" % (
+                            src, release, archcand)
                         poolsubdir = changesfile[0:1]
                         if changesfile.startswith("lib"):
                             poolsubdir = changesfile[0:4]
@@ -146,7 +146,7 @@ class Repository(repo.Repository):
                                 changesfile.split("_", 1)[0],
                                 changesfile)
                         if os.path.exists(testfile):
-                            filepath=testfile
+                            filepath = testfile
                             break
                     if filepath != "":
                         self.packages[name].append(
@@ -171,7 +171,7 @@ class Repository(repo.Repository):
 
     def add_package(self, package, update_metadata=False):
         """
-        Add *package* to this repository, optionally regenerating the 
+        Add *package* to this repository, optionally regenerating the
         metadata. If update_metadata is equal to False (the default), then
         the repository will be marked as dirty, but the update will not be
         done.
@@ -185,8 +185,10 @@ class Repository(repo.Repository):
             immediately or not.
         """
         pkg_basename = os.path.basename(package.path)
-        pkg_dest_dir = os.path.join(self.repo_path, "pool", "contrib",
-                pkg_basename[0], package.source_name[:package.source_name.find("_")])
+        pkg_dest_dir = os.path.join(
+            self.repo_path, "pool", "contrib",
+            pkg_basename[0],
+            package.source_name[:package.source_name.find("_")])
         dest_path = os.path.join(pkg_dest_dir, pkg_basename)
         if not os.path.exists(pkg_dest_dir):
             os.makedirs(pkg_dest_dir)
@@ -226,7 +228,7 @@ class Repository(repo.Repository):
         else:
             self.dirty = True
         return new_package
-        
+
     def update_metadata(self, force):
         """
         Update the package metadata from the changes files in a repository
@@ -238,7 +240,8 @@ class Repository(repo.Repository):
             if not os.path.exists(confdir):
                 os.makedirs(confdir, 0o755)
 
-            Repository._update_deb_distributions_conf(distributions_file, self.codename)
+            Repository._update_deb_distributions_conf(
+                distributions_file, self.codename)
             oscmd = 'reprepro --silent -b "%s" export' % (self.repo_path)
             os.system(oscmd)
             self.dirty = False
@@ -256,7 +259,7 @@ class Repository(repo.Repository):
         *distro*::
             Distribution codename to add to 'conf_file_path' (str)
         """
-        distribution_data="""
+        distribution_data = """
 Label: Globus Toolkit
 Codename: %s
 Architectures: amd64 i386 source
@@ -283,8 +286,11 @@ Description: Globus Toolkit Packages
         f.write(distribution_data)
         f.close()
 
+
 class Release(repo.Release):
-    def __init__(self, name, topdir, codenames=default_codenames, arches=default_arches):
+    def __init__(
+            self, name, topdir, codenames=default_codenames,
+            arches=default_arches):
         r = {}
         for codename in codenames:
             r[codename] = {}
@@ -309,55 +315,18 @@ class Release(repo.Release):
         else:
             return []
 
-class Cache(repo.Cache):
-    """
-    Cache
-    =====
-    The repo.deb.Cache object manages a mirror of the builds.globus.org
-    "deb" subdirectory. This mirror contains a repo.deb.Release object that
-    contains info about all of the operating system versions and their
-    architectures in the cache. 
-    """
-    def __init__(self, cache):
-        """
-        Constructor
-        -----------
-        Creates a new repo.deb.Cache object, syncing from the builds.globus.org
-        repository directory and creating metadata based on the packages
-        available.
-
-        Parameters
-        ----------
-        *self*:
-            New cache object.
-        *cache*:
-            Path of the cache root.
-        """
-        super(Cache, self).__init__(cache, "deb")
-        self.sync()
-
-        cached_deb_conf = os.path.join(self.cache, "conf/distributions")
-
-        codenames = []
-        if os.path.exists(cached_deb_conf):
-            f = file(cached_deb_conf, "r")
-            for l in f:
-                m = codename_re.match(l)
-                if m is not None:
-                    codename = m.group(1)
-                    codenames.append(codename)
-        self.release = Release("cache", self.cache, codenames)
 
 class Manager(repo.Manager):
     """
     Package Manager
     ===============
-    The repo.deb.Manager object manages the packages in a cache and release
-    tree. New packages from the cache (including new repositories) can be
+    The repo.deb.Manager object manages the packages in a release
+    tree. New packages from the repositories can be
     promoted to any of the released package trees via methods in this class
     """
-    def __init__(self, cache_root=repo.default_cache, root=repo.default_root,
-            releases=repo.default_releases, use_cache=True, os_names=None,
+    def __init__(
+            self, root=repo.default_root,
+            releases=repo.default_releases, os_names=None,
             exclude_os_names=None):
         """
         Constructor
@@ -366,14 +335,10 @@ class Manager(repo.Manager):
 
         Parameters
         ----------
-        *cache_root*::
-            Root of the cache to manage
         *root*::
             Root of the release trees
         *releases*::
             Names of the releases within the release trees
-        *use_cache*::
-            (Optional) Parse packages in the cache
         *os_names*::
             (Optional) List of operating system codenames (e.g. wheezy) to
             manage. If None, then all debian-based OSes will be managed.
@@ -384,12 +349,7 @@ class Manager(repo.Manager):
         """
         deb_releases = {}
 
-        if use_cache:
-            cache = Cache(cache_root)
-            codenames = cache.get_operating_systems()
-        else:
-            cache = None
-            codenames = Manager.find_codenames(root, releases[0])
+        codenames = Manager.find_codenames(root, releases[0])
 
         if os_names is not None:
             codenames = [cn for cn in codenames if cn in os_names]
@@ -400,7 +360,7 @@ class Manager(repo.Manager):
                     release,
                     os.path.join(root, release, 'deb'),
                     codenames)
-        super(Manager, self).__init__(cache, deb_releases)
+        super(Manager, self).__init__(deb_releases)
 
     @staticmethod
     def find_codenames(root, release):

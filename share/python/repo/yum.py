@@ -17,7 +17,6 @@ Package to manage the Globus Toolkit Yum repositories
 """
 
 import xml.etree.ElementTree as ET
-import fnmatch
 import gzip
 import os
 import os.path
@@ -75,9 +74,8 @@ class Repository(repo.Repository):
                     location = data.find(Repository.repolocationtag)
                     return os.path.join(repodir, location.attrib['href'])
 
-
     def __parse_primary_xml(self, xmlpath):
-        f = gzip.open(xmlpath,'rb')
+        f = gzip.open(xmlpath, 'rb')
         tree = ET.fromstring(f.read())
         f.close()
         packages = dict()
@@ -98,9 +96,8 @@ class Repository(repo.Repository):
             if pkgsource is None or pkgsource == '':
                 pkgsource = "-".join([packagename, packagever, packagerel]) \
                         + ".src.rpm"
-            if not packagename in packages:
+            if packagename not in packages:
                 packages[packagename] = []
-            versionkey = (packagever, packagerel)
             packages[packagename].append(repo.package.Metadata(
                 packagename,
                 packagever,
@@ -114,14 +111,17 @@ class Repository(repo.Repository):
 
     def __parse_primary_db(self, dbpath):
         packages = dict()
-        dbpath_uncompressed = dbpath.replace(".bz2","")
+        dbpath_uncompressed = dbpath.replace(".bz2", "")
         if (not os.path.exists(dbpath_uncompressed)) or \
                 os.path.getmtime(dbpath_uncompressed) <= \
                 os.path.getmtime(dbpath):
-            os.system('bzip2 -dc < "%s" > "%s"' % (dbpath, dbpath_uncompressed))
+            os.system(
+                'bzip2 -dc < "%s" > "%s"' % (dbpath, dbpath_uncompressed))
         conn = sqlite3.connect(dbpath_uncompressed)
         cur = conn.cursor()
-        c = cur.execute("select name, version, release, location_href, arch, rpm_sourcerpm from packages")
+        c = cur.execute("""
+            select name, version, release, location_href, arch,
+                   rpm_sourcerpm from packages""")
         for name, ver, rel, href, arch, source in c:
             packagename = str(name)
             packagever = ver
@@ -135,9 +135,8 @@ class Repository(repo.Repository):
             if source is None or source == '':
                 pkgsource = "-".join([packagename, packagever, packagerel]) \
                         + ".src.rpm"
-            if not packagename in packages:
+            if packagename not in packages:
                 packages[packagename] = []
-            versionkey = (packagever, packagerel)
             packages[packagename].append(repo.package.Metadata(
                 packagename,
                 packagever,
@@ -165,7 +164,9 @@ class Repository(repo.Repository):
                     os.chmod(dirname, 0o2775)
                     dirname = os.path.dirname(dirname)
 
-        out,err = Popen(['createrepo', '--version'], stdout=PIPE).communicate()
+        out, err = Popen(
+            ['createrepo', '--version'],
+            stdout=PIPE).communicate()
         matches = re.search(r"(\d+).(\d+).(\d+)", out)
         if int(matches.group(1)) >= 1 or int(matches.group(2)) >= 9:
             self.use_sha_arg = True
@@ -186,11 +187,11 @@ class Repository(repo.Repository):
             self.packages[package].sort()
 
     def add_package(self, package, update_metadata=False):
-        dest_rpm_path = os.path.join(self.repo_path,
-            os.path.basename(package.path))
+        dest_rpm_path = os.path.join(
+            self.repo_path, os.path.basename(package.path))
         if not os.path.exists(dest_rpm_path):
             shutil.copy(package.path, dest_rpm_path)
-        if not package.name in self.packages:
+        if package.name not in self.packages:
             self.packages[package.name] = []
 
         # Create a new repo.package.Metadata with the new path
@@ -209,7 +210,7 @@ class Repository(repo.Repository):
         else:
             self.dirty = True
         return new_package
-        
+
     def update_metadata(self, force=False):
         if force or self.dirty:
             self.__createrepo()
@@ -220,7 +221,8 @@ class Repository(repo.Repository):
             os.system('createrepo -d "%s" -s sha' % (self.repo_path))
         else:
             os.system('createrepo -d "%s"' % (self.repo_path))
-        
+
+
 class Release(repo.Release):
     """
     Release
@@ -240,73 +242,28 @@ class Release(repo.Release):
         super(Release, self).__init__(name, r)
 
     def repositories_for_package(self, package):
-        if package.arch in [ 'noarch', 'i686', 'i386' ]:
+        if package.arch in ['noarch', 'i686', 'i386']:
             if package.os in self.repositories:
                 return [self.repositories[package.os][arch]
-                        for arch in self.get_architectures(package.os) 
+                        for arch in self.get_architectures(package.os)
                         if arch != 'src']
         else:
             if package.os in self.repositories:
                 return [self.repositories[package.os][package.arch]]
         return []
 
-class Cache(repo.Cache):
-    """
-    Cache
-    =====
-    The repo.yum.Cache object manages a mirror of the builds.globus.org
-    "rpm" subdirectory (except for sles). This mirror contains a
-    repo.yum.Release object that contains info about all of the operating
-    system versions and their architectures in the cache. 
-    """
-    def __init__(self, cache):
-        """
-        Constructor
-        -----------
-        Creates a new repo.yum.Cache object, syncing from the builds.globus.org
-        repository directory and creating metadata based on the packages
-        available.
-
-        Parameters
-        ----------
-        *self*:
-            New cache object.
-        *cache*:
-            Path of the cache root.
-        """
-        super(Cache, self).__init__(cache, "rpm", ["sles"])
-        self.sync()
-
-        cached_rpm_root = os.path.join(cache, 'rpm')
-        cached_repos = {}
-        # Create a cached_repos dict that is similar in form to
-        # default_yum_repos, but contains the repos present in the cache
-        for osname in os.listdir(cached_rpm_root):
-            if osname == "sles":
-                continue
-            osdir = os.path.join(cached_rpm_root, osname)
-            for osver in os.listdir(osdir):
-                this_repo_topdir = os.path.join(osdir, osver)
-                this_repo_subdirs = []
-                this_repo_name = os.path.join(osname, osver)
-                for repodir in os.listdir(this_repo_topdir):
-                    if os.path.isdir(os.path.join(this_repo_topdir, repodir)):
-                        this_repo_subdirs.append(repodir)
-                cached_repos[this_repo_name] = this_repo_subdirs
-
-        # Create a Release from the cached repos
-        self.release = Release("cache", cached_rpm_root, cached_repos)
 
 class Manager(repo.Manager):
     """
     Package Manager
     ===============
-    The repo.yum.Manager object manages the packages in a cache and release
-    tree. New packages from the cache (including new repositories) can be
-    promoted to any of the released package trees via methods in this class
+    The repo.yum.Manager object manages the packages in a release
+    tree. New packages can be promoted to any of the released package trees via
+    methods in this class
     """
-    def __init__(self, cache_root=repo.default_cache, root=repo.default_root,
-            releases=repo.default_releases, use_cache=True, os_names=None,
+    def __init__(
+            self, root=repo.default_root,
+            releases=repo.default_releases, os_names=None,
             exclude_os_names=None):
         """
         Constructor
@@ -315,14 +272,10 @@ class Manager(repo.Manager):
 
         Parameters
         ----------
-        *cache_root*::
-            Root of the cache to manage
         *root*::
             Root of the release trees
         *releases*::
             Names of the releases within the release trees
-        *use_cache*::
-            (Optional) Parse packages in the cache
         *os_names*::
             (Optional) List of operating system name/version (e.g. el/7) to
             manage. If None, then all yum-based OSes will be managed.
@@ -332,13 +285,7 @@ class Manager(repo.Manager):
             evaluated after os_names
         """
         oses = dict()
-        if use_cache:
-            cache = Cache(cache_root) if use_cache else None
-            for osname in cache.get_operating_systems():
-                oses[osname] = cache.get_architectures(osname)
-        else:
-            cache = None
-            oses = Manager.find_operating_systems(root, releases[0])
+        oses = Manager.find_operating_systems(root, releases[0])
         if os_names is not None:
             new_oses = dict()
             for osname in oses:
@@ -357,7 +304,7 @@ class Manager(repo.Manager):
                     release,
                     os.path.join(root, release, 'rpm'),
                     oses)
-        super(Manager, self).__init__(cache, yum_releases)
+        super(Manager, self).__init__(yum_releases)
 
     @staticmethod
     def find_operating_systems(root, release):
@@ -371,7 +318,7 @@ class Manager(repo.Manager):
                 osnamedir = os.path.join(release_os_dir, osname)
                 for osver in os.listdir(osnamedir):
                     osnamever = os.path.join(osname, osver)
-                    osnameverdir = os.path.join(release_os_dir,osnamever)
+                    osnameverdir = os.path.join(release_os_dir, osnamever)
                     if os.path.isdir(osnameverdir):
                         oses[osnamever] = []
                         for arch in os.listdir(osnameverdir):

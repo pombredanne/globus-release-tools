@@ -119,13 +119,13 @@ print("====================")
 pkg_managers = dict()
 print("Parsing deb")
 pkg_managers['deb'] = \
-    repo.deb.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
+    repo.deb.Manager(root=args.root, releases=releases, os_names=os_name, exclude_os_names=exclude_os_names)
 print("Parsing yum")
 pkg_managers['yum'] = \
-    repo.yum.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
+    repo.yum.Manager(root=args.root, releases=releases, os_names=os_name, exclude_os_names=exclude_os_names)
 print("Parsing zypper")
 pkg_managers['zypper'] = \
-    repo.zypper.Manager(root=args.root, releases=releases, use_cache=False, os_names=os_name, exclude_os_names=exclude_os_names)
+    repo.zypper.Manager(root=args.root, releases=releases, os_names=os_name, exclude_os_names=exclude_os_names)
 
 pdict = dict()
 advisories = None
@@ -165,8 +165,7 @@ if args.to_release == 'stable':
             if p.startswith('globus-connect-server')]
 
     if len(gcs_packages) > 0:
-        packages_manager = repo.packages.Manager(root=args.root,
-	    use_cache=False)
+        packages_manager = repo.packages.Manager(root=args.root)
         packages_manager.get_release('stable').repositories_for_package(None)[0].update_gcs_version_file()
 
 
