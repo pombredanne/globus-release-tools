@@ -18,6 +18,8 @@ Package to manage the installers repository
 
 import os
 import os.path
+import re
+import shutil
 
 import repo
 import repo.package
@@ -25,10 +27,11 @@ import repo.packages
 
 
 class InstallerInfo(object):
-    def __init__(self, name, subdir, package_re):
+    def __init__(self, name, subdir, package_re, formatter):
         self.name = name
         self.subdir = subdir
         self.package_re = package_re
+        self.formatter = formatter
 
 
 class Repository(repo.packages.Repository):
@@ -39,8 +42,35 @@ class Repository(repo.packages.Repository):
                 installer_info.name, installer_info.package_re)
 
     def add_package(self, package, update_metadata=False):
-        return super(Repository, self).add_package(
+        if package.version.strversion != 'latest':
+            new_package = super(Repository, self).add_package(
                 package, update_metadata=update_metadata)
+            groups = re.match(
+                self.installer_info.package_re,
+                os.path.basename(new_package.path)).groupdict()
+            groups['version'] = 'latest'
+            groups['release'] = ""
+            groups['buildno'] = ""
+
+            newname = self.installer_info.formatter(**groups)
+
+            new_package_path = os.path.join(
+                os.path.dirname(new_package.path),
+                newname)
+            latest_candidates = [
+                (pkg)
+                for pkg in self.packages[new_package.name]
+                if pkg.name == new_package.name
+                    and pkg.version.strversion != "latest"
+                    and pkg.version > new_package.version
+            ]
+            if len(latest_candidates) == 0:
+                shutil.copy(new_package.path, new_package_path)
+                if update_metadata:
+                    self.update_metadata(True)
+
+
+
 
 
 class Release(repo.Release):
@@ -68,11 +98,12 @@ class Release(repo.Release):
     def get_packages(
             self, name=None, os=None, version=None, arch=None,
             source=None, newest_only=False):
-        return [p
+        res = [p
                 for repository in self.repositories_for_os_arch(os, arch)
                 for p in repository.get_packages(
                     name=name, version=version, source=source,
                     newest_only=newest_only)]
+        return res
 
 class Manager(repo.Manager):
     """
@@ -97,31 +128,38 @@ class Manager(repo.Manager):
             InstallerInfo(
                 "Linux Binary Installer",
                 "linux",
-                r"(?P<name>[a-z_]*-(?P<version>([0-9.]|beta|rc)+)-(?P<arch>[a-z0-9_-]+))-Build-(?P<release>[0-9]+)"),
+                r"(?P<name>(?P<basename>[a-z_]*)-(?P<version>([0-9.]|beta|rc)+)-(?P<arch>[a-z0-9_-]+))(?P<buildno>-Build-(?P<release>[0-9]+)).tar.gz$",
+                "{basename}-{version}-{arch}{buildno}.tar.gz".format),
             InstallerInfo(
                 "macos Binary Installer",
                 "mac",
-                r"(?P<name>[a-zA-Z_]*-(?P<version>([0-9.]|beta|rc)+))(-build(?P<release>[0-9]+))?(\.pkg|\.tar\.gz)"),
+                r"(?P<name>(?P<basename>[a-zA-Z_]*)-(?P<version>([0-9.]|beta|rc)+))(?P<buildno>-build(?P<release>[0-9]+))?(?P<extension>\.pkg|\.tar\.gz)$",
+                "{basename}-{version}{buildno}{extension}".format),
             InstallerInfo(
                 "RPM Installer",
                 'repo/rpm',
-                r"(?P<name>[a-z-]*[a-z]-(?P<version>[0-9.]*[0-9]))-(?P<release>[0-9]+).*\.noarch\.rpm$"),
+                r"(?P<name>(?P<basename>[a-z-]*[a-z])-(?P<version>[0-9.]*[0-9]))(?P<buildno>-(?P<release>[0-9]+))(?P<extension>.*\.noarch\.rpm)$",
+                "{basename}-{version}{buildno}{extension}".format),
             InstallerInfo(
                 'Debian Installer',
                 "repo/deb",
-                r"(?P<name>[a-z-]*[a-z]_(?P<version>[0-9.]+))(-(?P<release>[0-9]+))?.deb"),
+                r"(?P<name>(?P<basename>[a-z-]*[a-z])_(?P<version>[0-9.]+))(?P<buildno>-(?P<release>[0-9]+))?_all.deb$",
+                "{basename}_{version}{buildno}_all.deb".format),
             InstallerInfo(
                 "Source Installer",
                 'src',
-                r"(?P<name>[a-z_]*)-(?P<version>([0-9.]|beta|rc)*)\.tar\.gz"),
+                r"(?P<name>[a-z_]*)-(?P<version>([0-9.]|beta|rc)*)\.tar\.gz$",
+                "{name}-{version}.tar.gz".format),
             InstallerInfo(
                 "Cygwin Installer",
                 'windows',
-                r"(?P<name>[a-z_]*-(?P<version>([0-9.]|beta|rc)*)-(?P<arch>[a-z0-9]*-pc-cygwin))-Build-(?P<release>[0-9]+)"),
+                r"(?P<name>(?P<basename>[a-z_]*)-(?P<version>([0-9.]|beta|rc)*)-(?P<arch>[a-z0-9]*-pc-cygwin))(?P<buildno>-Build-(?P<release>[0-9]+)).zip$",
+                "{basename}-{version}-{arch}{buildno}.zip".format),
             InstallerInfo(
                 "Mingw32 Installer",
                 "windows",
-                r"(?P<name>[a-z_]*-(?P<version>([0-9.]|beta|rc)*)-(?P<arch>[a-z0-9]*-w64-mingw32))-Build-(?P<release>[0-9]+)"),
+                r"(?P<name>(?P<basename>[a-z_]*)-(?P<version>([0-9.]|beta|rc)*)-(?P<arch>[a-z0-9]*-w64-mingw32))(?P<buildno>-Build-(?P<release>[0-9]+)).zip$",
+                "{basename}-{version}-{arch}{buildno}.zip".format),
         ]
 
         release = {}

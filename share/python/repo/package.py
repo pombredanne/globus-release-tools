@@ -87,8 +87,9 @@ class Metadata(object):
             return c
 
     def __str__(self):
-        return "Name: %s\nVersion: %s\nRelease: %s\n" \
-            + "Path: %s\nArch: %s\nSource: %s\nOS: %s\n" % (
+        return (
+            "Name: %s\nVersion: %s\nRelease: %s\n"
+            "Path: %s\nArch: %s\nSource: %s\nOS: %s\n") % (
                 self.name,
                 self.version.strversion,
                 self.version.release,

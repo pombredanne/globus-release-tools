@@ -111,7 +111,7 @@ def ProgramVersionGreater(ver1, ver2):
     """
     v1f = version2float(ver1)
     v2f = version2float(ver2)
-    return v1f == 1000 or v1f > v2f
+    return v1f == 1000.0 or v1f > v2f
 
 
 def ReleaseGreater(ver1, ver2):
