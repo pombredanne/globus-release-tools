@@ -1,0 +1,117 @@
+'\" t
+.\"     Title: repo-s3-sync
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/06/2017
+.\"    Manual: Globus Toolkit Manual
+.\"    Source: globus-release-tools
+.\"  Language: English
+.\"
+.TH "REPO\-S3\-SYNC" "1" "03/06/2017" "globus\-release\-tools" "Globus Toolkit Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+repo-s3-sync \- Copy the newest packages from local cache to S3
+.SH "SYNOPSIS"
+.sp
+\fBrepo\-s3\-sync\fR [ \-h | \-\-help ]
+.sp
+\fBrepo\-s3\-sync\fR [ OPTIONS ]
+.SH "DESCRIPTION"
+.sp
+The \fBrepo\-s3\-sync\fR program assumes that another script has already been run to create local packages in a directory identified as the \fBROOT\fR\&. This may be the \fBCACHE\fR or \fBROOT\fR in other scripts, depending on where it is run\&. Packages are copied from the \fBROOT\fR into an S3 bucket (by default, \fBs3://downloads\&.globus\&.org\fR)
+.sp
+The \fBrepo\-s3\-sync\fR program can either copy all files in the \fBROOT\fR, or a specified \fB\-\-subdir\fR of the \fBROOT\fR\&.
+.sp
+By default, files are compared against any existing S3 data using checksums, but you can specify \fB\-\-compare\-method\fR to tune this behavior\&.
+.sp
+To keep the process speedy, \fBrepo\-s3\-sync\fR uses a large threadpool to parallelize the check\-and\-upload tasks\&. You can adjust the number of threads used with \fB\-\-pool\-size\fR
+.SH "OPTIONS"
+.PP
+\fB\-h, \-\-help\fR
+.RS 4
+Show a help message and exit
+.RE
+.PP
+\fB\-r ROOT, \-\-root ROOT\fR
+.RS 4
+Sync packages from the ROOT directory
+.RE
+.PP
+\fB\-\-subdir CACHE\fR
+.RS 4
+Subdirectory of
+\fBROOT\fR
+to sync instead of full
+\fBROOT\fR
+.RE
+.PP
+\fB\-d, \-\-dryrun\fR
+.RS 4
+Display files that would be copied, but don\(cqt actually execute the copy
+.RE
+.PP
+\fB\-\-delete\fR
+.RS 4
+Do a sync\-delete operation, removing files not in the source dir after uploading is complete\&. Recommend using
+\fB\-\-verbose\fR
+with this flag
+.RE
+.PP
+\fB\-v, \-\-verbose\fR
+.RS 4
+Be verbose about checks and uploads, list every file
+.RE
+.PP
+\fB\-\-s3\-bucket BUCKETNAME\fR
+.RS 4
+Sync to
+\fBBUCKETNAME\fR, defaults to
+downloads\&.globus\&.org
+.RE
+.PP
+\fB\-\-s3\-path PATH\fR
+.RS 4
+Path prefix to use in
+\fBBUCKETNAME\fR, defaults to
+toolkit/gt6
+Will have
+data/
+prepended, as all writes to the S3 bucket go into the
+data/
+namespace
+.RE
+.PP
+\fB\-\-compare\-method METHOD\fR
+.RS 4
+How to compare files against S3\&. One of
+\fIchecksum\fR,
+\fIsize\fR,
+\fImodified\fR
+(i\&.e\&. mtime vs\&. S3 modified time),
+\fInocheck\fR\&. Defaults to
+\fIchecksum\fR
+.RE
+.SH "SEE ALSO"
+.sp
+repo\-promote\-package(1)
+.SH "AUTHOR"
+.sp
+Copyright \(co 2014 University of Chicago

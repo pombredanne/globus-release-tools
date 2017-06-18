@@ -15,6 +15,7 @@
 import repo
 import repo.versioncompare
 
+
 class Version(object):
     """
     Version class to allow comparison of package versions, including
@@ -33,23 +34,31 @@ class Version(object):
             self.release = "*"
 
     def __lt__(self, other):
-        return (self.version < other.version) or \
-            ((self.version == other.version) and repo.versioncompare.ReleaseGreater(other.release, self.release))
-        
+        return (
+            (self.version < other.version)
+            or (
+                (self.version == other.version)
+                and repo.versioncompare.ReleaseGreater(
+                    other.release, self.release)))
+
     def __le__(self, other):
         return (self < other) or (self == other)
 
     def __eq__(self, other):
-        return ((self.version == other.version)
-                and ((self.release == other.release)
-                    or (self.release == '*') or (other.release == '*')))
+        return (
+            (self.version == other.version)
+            and ((self.release == other.release)
+                 or (self.release == '*') or (other.release == '*')))
 
     def __ne__(self, other):
         return self.version != other.version or self.release != other.release
 
     def __gt__(self, other):
-        return (self.version > other.version) or \
-            ((self.version == other.version) and repo.versioncompare.ReleaseGreater(self.release, other.release))
+        return (
+            (self.version > other.version)
+            or ((self.version == other.version)
+                and repo.versioncompare.ReleaseGreater(
+                    self.release, other.release)))
 
     def __ge__(self, other):
         return (self > other) or (self == other)
@@ -59,6 +68,7 @@ class Version(object):
             return "%s" % self.strversion
         else:
             return "%s-%s" % (self.strversion, self.release)
+
 
 class Metadata(object):
     def __init__(self, name, version, release, path, arch, source, os):
@@ -77,6 +87,15 @@ class Metadata(object):
             return c
 
     def __str__(self):
-        return "Name: %s\nVersion: %s\nRelease: %s\nPath: %s\nArch: %s\nSource: %s\nOS: %s\n" % ( self.name, self.version.strversion, self.version.release, self.path, self.arch, self.source_name, self.os)
+        return (
+            "Name: %s\nVersion: %s\nRelease: %s\n"
+            "Path: %s\nArch: %s\nSource: %s\nOS: %s\n") % (
+                self.name,
+                self.version.strversion,
+                self.version.release,
+                self.path,
+                self.arch,
+                self.source_name,
+                self.os)
 
 # vim: filetype=python:

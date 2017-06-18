@@ -63,21 +63,16 @@ parser.add_argument(
 parser.add_argument(
     "from_release",
     help="List packages in the FROM release [unstable]",
-    choices=["unstable", "testing", "stable", "cache"])
+    choices=["unstable", "testing", "stable"])
 
 args = parser.parse_args()
 
-if args.from_release == 'cache':
-    releases = []
-    use_cache = True
-else:
-    releases = [args.from_release]
-    use_cache = False
+releases = [args.from_release]
 
 pkg_managers = [
-    repo.deb.Manager(root=args.root, releases=releases, use_cache=use_cache),
-    repo.yum.Manager(root=args.root, releases=releases, use_cache=use_cache),
-    repo.zypper.Manager(root=args.root, releases=releases, use_cache=use_cache)
+    repo.deb.Manager(root=args.root, releases=releases),
+    repo.yum.Manager(root=args.root, releases=releases),
+    repo.zypper.Manager(root=args.root, releases=releases)
 ]
 
 pdict = dict()

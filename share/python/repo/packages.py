@@ -16,14 +16,13 @@
 Package to manage the Globus Toolkit source tarball repository
 """
 
-import fnmatch
-import hashlib
 import os
 import os.path
 import re
 import repo
 import repo.package
 import shutil
+
 
 class Repository(repo.Repository):
     """
@@ -60,11 +59,11 @@ class Repository(repo.Repository):
             self.packages[p].sort()
 
     def add_package(self, package, update_metadata=False):
-        dest_path = os.path.join(self.repo_path,
-            os.path.basename(package.path))
+        dest_path = os.path.join(
+            self.repo_path, os.path.basename(package.path))
         if not os.path.exists(dest_path):
             shutil.copy(package.path, dest_path)
-        if not package.name in self.packages:
+        if package.name not in self.packages:
             self.packages[package.name] = []
 
         # Create a new repo.package.Metadata with the new path
@@ -83,7 +82,6 @@ class Repository(repo.Repository):
         else:
             self.dirty = True
         return new_package
-        
 
     def update_metadata(self, force=False):
         """
@@ -108,7 +106,7 @@ class Repository(repo.Repository):
         Update the GLOBUS_CONNECT_SERVER_LATEST file, which is used by
         the GCS scripts to nag the user about not being up-to-date
         """
-        gcs = self.packages.get('globus_connect_server',[])
+        gcs = self.packages.get('globus_connect_server', [])
         max_gcs_version = repo.package.Version("0")
         for gcs_pkg in gcs:
             if gcs_pkg.version > max_gcs_version:
@@ -121,7 +119,7 @@ class Repository(repo.Repository):
             latest_gcs_file = file(latest_gcs_file_path, "r")
             latest_gcs_file_version = repo.package.Version(
                     latest_gcs_file.read().strip())
-        except IOError as e:
+        except IOError:
             pass
         else:
             latest_gcs_file.close()
@@ -133,6 +131,7 @@ class Repository(repo.Repository):
             finally:
                 latest_file.close()
 
+
 class Release(repo.Release):
     """
     Release
@@ -141,6 +140,7 @@ class Release(repo.Release):
     architectures for a particular operating system release.
     """
     pkg_re = re.compile(r"(?P<name>(?!globusonline-|gridftp-blackpearl-dsi-)[^-]*|globusonline-[a-z-]*[a-z]*|gridftp-blackpearl-dsi-)-(?P<version>.*?)(-src|-gt5.2)?.tar.gz$")
+
     def __init__(self, name, topdir):
         r = Repository(topdir, "packages", Release.pkg_re)
         super(Release, self).__init__(name, r)
@@ -151,33 +151,16 @@ class Release(repo.Release):
     def repositories_for_package(self, package):
         return [self.repositories]
 
-class Cache(repo.Cache):
-    """
-    Cache
-    =====
-    The repo.packages.Cache object manages a mirror of the builds.globus.org
-    "packages" subdirectory. This mirror contains a repo.packages.Distro() for
-    the source packages in the cache. This Distro object can be used
-    to promote packages from the cache
-    """
-    def __init__(self, cache):
-        self.cache_dir = cache
-        super(Cache, self).__init__(cache, "packages")
-        self.sync()
-
-        cache_root = os.path.join(cache, 'packages')
-        self.release = Release("cache", cache_root)
 
 class Manager(repo.Manager):
     """
     Package Manager
     ===============
-    The repo.packages.Manager object manages the packages in a cache and
-    release tree. New packages from the cache can be
+    The repo.packages.Manager object manages the packages in a
+    release tree. New packages from the repositories can be
     promoted to the release tree.
     """
-    def __init__(self, cache_root=repo.default_cache, root=repo.default_root,
-            use_cache=True):
+    def __init__(self, root=repo.default_root):
         """
         Constructor
         -----------
@@ -185,29 +168,23 @@ class Manager(repo.Manager):
 
         Parameters
         ----------
-        *cache_root*::
-            Root of the cache to manage
         *root*::
             Root of the release trees
-        *use_cache*::
-            (Optional) Parse packages in the cache
         """
-        cache = Cache(cache_root) if use_cache else None
-
-        release = {"release": Release("release",
-                    os.path.join(root, 'packages'))}
-        super(Manager, self).__init__(cache, release)
+        release = {
+            "release": Release(
+                "release", os.path.join(root, 'packages'))
+        }
+        super(Manager, self).__init__(release)
 
     def get_release(self, releasename):
-        if releasename == 'cache':
-            return self.cache.release
-        else:
-            return self.releases['release']
+        return self.releases['release']
 
     def package_name(self, name):
         return name.replace("-", "_") if name is not None else None
 
     def __str__(self):
-        return " ".join(["Packages Manager [", ",".join(self.releases.keys()), "]"])
+        return " ".join(
+            ["Packages Manager [", ",".join(self.releases.keys()), "]"])
 
 # vim: filetype=python:

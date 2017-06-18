@@ -1,0 +1,336 @@
+#!/usr/bin/env python
+
+# Copyright 2016 University of Chicago
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from __future__ import print_function
+
+import sys
+import os
+import os.path
+import argparse
+import hashlib
+import datetime
+import mimetypes
+import threading
+import Queue
+from multiprocessing.dummy import Pool as ThreadPool
+
+import boto3
+import botocore.exceptions
+s3_client = boto3.client('s3')
+
+
+def import_repo():
+    """
+    Does an import that involves munging the pythonpath.
+    """
+    sys.path.append(os.path.join(
+            os.path.dirname(sys.argv[0]),
+            "..",
+            "share",
+            "python"))
+    import repo
+    return repo
+
+
+def printqueue_handler(printqueue):
+    """
+    This is the body of the thread that reads from a queue and prints its
+    contents.
+    """
+    while True:
+        print(printqueue.get(), end='')
+        sys.stdout.flush()
+
+
+# setup the printqueue and its handler thread
+printqueue = Queue.Queue()
+printhandler_thread = threading.Thread(target=printqueue_handler,
+                                       args=(printqueue,))
+printhandler_thread.daemon = True
+printhandler_thread.start()
+
+
+def s3_checksum(bucket, key):
+    """
+    Get the MD5 of an S3 object
+    If the object doesn't exist, returns None
+    """
+    try:
+        # for some reason, the S3 API gives back the ETag quoted. Unquote it to
+        # be comparable to a locally generated hash
+        return s3_client.get_object(
+            Bucket=bucket, Key=key)["ETag"].replace('"', '')
+    except botocore.exceptions.ClientError:
+        return None
+
+
+def s3_size(bucket, key):
+    """
+    Get size (in bytes) of an S3 object
+    """
+    try:
+        return s3_client.get_object(Bucket=bucket, Key=key)["ContentLength"]
+    except botocore.exceptions.ClientError:
+        return None
+
+
+def s3_mtime(bucket, key):
+    """
+    Get size (in bytes) of an S3 object
+    """
+    try:
+        return s3_client.get_object(Bucket=bucket, Key=key)["LastModified"]
+    except botocore.exceptions.ClientError:
+        return None
+
+
+def compare_dispatch(method, filename, bucket_name, dest_path, since):
+    """
+    Returns True if things match and the file should not be uploaded
+    Returns False if the file should be uploaded
+
+    Dispatches on various comparison types, from the --compare-method cli arg
+    """
+    if method == "checksum":
+        # check if the ETag (S3 md5 hash) mismatches with a local hash
+        local_sum = hashlib.md5()
+        with open(filename, 'r') as f:
+            local_sum.update(f.read())
+        return local_sum.hexdigest() == s3_checksum(bucket_name, dest_path)
+    elif method == "size":
+        return os.stat(filename).st_size == s3_size(bucket_name, dest_path)
+    elif method == "modified":
+        # be more careful here, since we can't compare a datetime with None
+        # using '<='
+        # also, be careful and normalize to TZ naive dates
+        local_mtime = datetime.datetime.fromtimestamp(
+            os.stat(filename).st_mtime).replace(tzinfo=None)
+
+        if since is not None:
+            compare_mtime = datetime.datetime.fromtimestamp(
+                float(since)).replace(tzinfo=None)
+        else:
+            s3_time = s3_mtime(bucket_name, dest_path)
+            if s3_time is None:
+                return False
+            compare_mtime = s3_time.replace(tzinfo=None)
+        return local_mtime <= compare_mtime
+    elif method == "nocheck":
+        return False
+    # just in case...
+    else:
+        return False
+
+
+def files_in_dir(start_dir):
+    """
+    Walk a dir and just yield filenames as abspaths, plus their relative
+    location WRT the start dir
+    Lets us start with a path relative to the CWD, but get relative paths WRT
+    the dir we're listing.
+    """
+    fullpath = os.path.abspath(start_dir)
+    for (path, dirs, files) in os.walk(fullpath):
+        for filename in files:
+            full_fname = os.path.join(path, filename)
+            yield (full_fname, os.path.relpath(full_fname, fullpath))
+
+
+def s3_sync_dir(source_dir, bucket_name, dest_prefix, dry_run=True,
+                verbose=False, delete=False, compare_method=None,
+                since=None,
+                pool_size=10):
+    """
+    Upload a directory to an S3 bucket, under a given prefix.
+    Normalizes the prefix as part of a path, so prefixes like `../` are
+    dangerous, and may cause unexpected behavior.
+
+    If `delete=True`, also deletes files from the S3 bucket which are not
+    present in the source directory.
+    """
+    # initialize the set of files to delete on sync, dependent on the --delete
+    # flag having been passed
+    if delete:
+        maybe_delete = set(
+            item['Key']
+            for result in s3_client.get_paginator(
+                'list_objects_v2').paginate(
+                    Bucket=bucket_name, Prefix=dest_prefix)
+            for item in result.get('Contents', []))
+
+    # setup the undelete queue to be a threadsafe container for items which we
+    # do not want to delete (i.e. uploader threads can touch it safely)
+    # because this does not require any kind of liveness, it doesn't need a
+    # fancy thread wrapping it like the printqueue
+    undelete_queue = Queue.Queue()
+
+    def handle_file(args):
+        filename, relpath = args
+
+        # important! normalize this path because it will be used as an S3
+        # prefix, so things like `/./` will be preserved!
+        dest_path = os.path.normpath(os.path.join(dest_prefix, relpath))
+
+        # put the dest path into the undelete queue -- make sure we don't
+        # delete objects we just uploaded
+        undelete_queue.put(dest_path)
+
+        message = ""
+
+        if verbose:
+            message += ("Check if we should upload {0} to s3://{1}/{2}\n"
+                        .format(filename, bucket_name, dest_path))
+
+        # check for dry run mode
+        if dry_run:
+            printqueue.put(message)
+            return
+
+        if compare_dispatch(compare_method, filename, bucket_name, dest_path, since):
+            if verbose:
+                message += (("No upload for {0}: comparison of type "
+                             "\"{1}\" passed\n")
+                            .format(filename, compare_method))
+            printqueue.put(message)
+            return
+
+        # do the upload
+        if verbose:
+            message += "Confirmed, uploading {0} to {1}\n".format(
+                filename, dest_path)
+
+        if message:
+            printqueue.put(message)
+
+        # mime_type is None if the type can't be guessed
+        # encoding is usually None, but part of the return
+        mime_type, encoding = mimetypes.guess_type(filename)
+        if mime_type is not None:
+            extra_args = {'ContentType': mime_type}
+        else:
+            extra_args = {}
+        s3_client.upload_file(filename, bucket_name, dest_path,
+                              ExtraArgs=extra_args)
+
+    pool = ThreadPool(pool_size)
+    pool.map(handle_file, files_in_dir(source_dir))
+
+    def delete_s3file(key):
+        if verbose:
+            printqueue.put('sync-delete from S3: {0}\n'.format(key))
+        if dry_run:
+            return
+        s3_client.delete_object(Bucket=bucket_name, Key=key)
+
+    # pool.map joins the threads, so now we can do the delete operation(s)
+    if delete:
+        # start by walking the undelete queue and getting items to remove
+        # from the deletion set
+        while not undelete_queue.empty():
+            relpath = undelete_queue.get()
+            maybe_delete.discard(relpath)
+
+        # run a new threadpool to do the deletes
+        pool = ThreadPool(pool_size)
+        pool.map(delete_s3file, maybe_delete)
+
+
+def parse_args():
+    repo = import_repo()
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Copy a package from the local filesystem to a location in S3. "
+            "This is intended to run after packages have been generated on the"
+            "local filesystem"))
+    parser.add_argument(
+        "-r", "--root",
+        help="Root dir from which to copy files [" + repo.default_root + "]",
+        default=repo.default_root)
+    parser.add_argument(
+        "--subdir",
+        help=("Subdir of the root which we want to copy. Defaults to the "
+              "whole root dir. Also joined to the dest path to specify the "
+              "matching subdir on the destination"),
+        default=None)
+    parser.add_argument(
+        "-d", "--dryrun",
+        help="Display packages that would be copied, but don't actually " +
+             "execute the copy [False]",
+        action='store_true')
+    parser.add_argument(
+        "--delete",
+        help="Delete files in the destination dir (under the S3 prefix) "
+             "which are not in the source dir [False]",
+        action='store_true')
+    parser.add_argument(
+        "-v", "--verbose",
+        help="Display every file that is copied [False]",
+        action='store_true')
+    parser.add_argument(
+        "--s3-bucket",
+        help=("The bucket into which to copy files [downloads.globus.org]"),
+        default='downloads.globus.org')
+    parser.add_argument(
+        "--s3-path",
+        help=("The dest path into which to copy files [toolkit/gt6]"),
+        default='toolkit/gt6')
+    parser.add_argument(
+        "--compare-method",
+        help=("The method by which local files and S3 objects are compared in "
+              "order to determine whether or not to upload [checksum]"),
+        choices=['checksum', 'size', 'modified', 'nocheck'],
+        default='checksum')
+    parser.add_argument(
+        "--since",
+        help=("Compare file change times with SINCE instead of the "
+              "s3 timestamp"),
+        default=None),
+    parser.add_argument(
+        "--pool-size",
+        help="Number of threads to use to speed IO [100]",
+        type=int, default=100)
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    # for clarity's sake: this does not need to have a trailing slash, but it
+    # will be treated as a dirname on the destination
+    upload_prefix = os.path.join('data/', args.s3_path)
+
+    source_dir = args.root
+
+    if args.subdir:
+        upload_prefix = os.path.join(upload_prefix, args.subdir)
+        source_dir = os.path.join(source_dir, args.subdir)
+
+    printqueue.put("Uploading {0} to s3://{1}/{2}\n"
+                   .format(source_dir, args.s3_bucket, upload_prefix))
+    s3_sync_dir(source_dir, args.s3_bucket, upload_prefix,
+                dry_run=args.dryrun, verbose=args.verbose,
+                delete=args.delete, compare_method=args.compare_method,
+                since=args.since,
+                pool_size=args.pool_size)
+
+
+if __name__ == '__main__':
+    main()
+
+
+# vim:ft=python

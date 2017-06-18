@@ -20,6 +20,7 @@ Version comparison routines to deal with software version numbers, such as
 
 """
 
+
 def __v2fhelper(v, suff, version, weight):
     parts = v.split(suff)
     if 2 != len(parts):
@@ -27,7 +28,8 @@ def __v2fhelper(v, suff, version, weight):
     version[4] = weight
     version[5] = parts[1] if parts[1] else 0
     return parts[0]
- 
+
+
 def version2float(v):
     """
     Convert a Mozilla-style version string into a floating-point number
@@ -37,16 +39,20 @@ def version2float(v):
     Or, convert a gridftp-blackpearl-dsi version string with version._BETA
     """
     version = [
-        0, 0, 0, 0, # 4-part numerical revision
-        4, # Alpha, beta, RC or (default) final
-        0, # Alpha, beta, or RC version revision
-        1  # Pre or (default) final
+        0, 0, 0, 0,         # 4-part numerical revision
+        4,                  # Alpha, beta, RC or (default) final
+        0,                  # Alpha, beta, or RC version revision
+        1                   # Pre or (default) final
     ]
+
+    if v == 'latest':
+        return 1000.0
+
     parts = v.split("pre")
     if 2 == len(parts):
         version[6] = 0
         v = parts[0]
- 
+
     ver = 0
     m = re.match(r"(\d+).(\d+)p(\d+)-(\d{8})([a-z]?)", v, 0)
     if m is not None:
@@ -61,6 +67,7 @@ def version2float(v):
                 letterval = ord(m.group(5)) - ord('a') + 1
                 ver += float(letterval) / 100000000000000.
     else:
+        m = re.search(r'p(\d+)([a-z])?', v)
         if ".beta" in v:
             v = __v2fhelper(v, ".beta", version, 2)
         elif "beta" in v:
@@ -69,23 +76,21 @@ def version2float(v):
             v = __v2fhelper(v, "_BETA", version, 2)
         elif "BETA" in v:
             v = __v2fhelper(v, "BETA", version, 2)
-        elif "p2b" in v:
-            v = __v2fhelper(v, "p2b", version, 2)
-        elif "p2c" in v:
-            v = __v2fhelper(v, "p2c", version, 3)
-        elif "p2d" in v:
-            v = __v2fhelper(v, "p2d", version, 4)
-        elif "p2e" in v:
-            v = __v2fhelper(v, "p2e", version, 5)
-        elif "p2f" in v:
-            v = __v2fhelper(v, "p2f", version, 6)
+        elif m is not None:
+            if m.group(2) is not None:
+                v = __v2fhelper(
+                    v, m.group(0), version, 1 + ord(m.group(2)) - ord('a'))
+            else:
+                v = __v2fhelper(
+                    v, m.group(0), version, 0)
         elif "p2" in v:
             v = __v2fhelper(v, "p2", version, 1)
         else:
             v = __v2fhelper(v, "a",  version, 1)
             v = __v2fhelper(v, "b",  version, 2)
+            v = __v2fhelper(v, "g",  version, 7)
         v = __v2fhelper(v, "rc", version, 3)
- 
+
         parts = v.split(".")[:4]
         for (p, i) in zip(parts, range(len(parts))):
             version[i] = p
@@ -97,8 +102,8 @@ def version2float(v):
         ver += float(version[5]) / 10000000000.
         ver += float(version[6]) / 1000000000000.
     return ver
- 
- 
+
+
 def ProgramVersionGreater(ver1, ver2):
     """
     Return True if ver1 > ver2 using semantics of comparing version
@@ -106,7 +111,8 @@ def ProgramVersionGreater(ver1, ver2):
     """
     v1f = version2float(ver1)
     v2f = version2float(ver2)
-    return v1f > v2f
+    return v1f == 1000.0 or v1f > v2f
+
 
 def ReleaseGreater(ver1, ver2):
     """

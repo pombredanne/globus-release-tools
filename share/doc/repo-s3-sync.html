@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>repo-s3-sync</title><link rel="stylesheet" type="text/css" href="docbook-xsl.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /></head><body><div xml:lang="en" class="refentry" lang="en"><a id="idm1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>repo-s3-sync — Copy the newest packages from local cache to S3</p></div><div class="refsynopsisdiv"><a id="repo-s3-sync-SYNOPSIS"></a><h2>Synopsis</h2><p><span class="strong"><strong>repo-s3-sync</strong></span> [ -h | --help ]</p><p><span class="strong"><strong>repo-s3-sync</strong></span> [ OPTIONS ]</p></div><div class="refsect1"><a id="repo-s3-sync-DESCRIPTION"></a><h2>DESCRIPTION</h2><p>The <span class="strong"><strong>repo-s3-sync</strong></span> program assumes that another script has already been run to
+create local packages in a directory identified as the <span class="strong"><strong>ROOT</strong></span>. This may be the
+<span class="strong"><strong>CACHE</strong></span> or <span class="strong"><strong>ROOT</strong></span> in other scripts, depending on where it is run.
+Packages are copied from the <span class="strong"><strong>ROOT</strong></span> into an S3 bucket (by default,
+<span class="strong"><strong>s3://downloads.globus.org</strong></span>)</p><p>The <span class="strong"><strong>repo-s3-sync</strong></span> program can either copy all files in the <span class="strong"><strong>ROOT</strong></span>, or a
+specified <span class="strong"><strong>--subdir</strong></span> of the <span class="strong"><strong>ROOT</strong></span>.</p><p>By default, files are compared against any existing S3 data using checksums,
+but you can specify <span class="strong"><strong>--compare-method</strong></span> to tune this behavior.</p><p>To keep the process speedy, <span class="strong"><strong>repo-s3-sync</strong></span> uses a large threadpool to
+parallelize the check-and-upload tasks. You can adjust the number of threads
+used with <span class="strong"><strong>--pool-size</strong></span></p></div><div class="refsect1"><a id="repo-s3-sync-OPTIONS"></a><h2>OPTIONS</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term">
+<span class="strong"><strong>-h, --help</strong></span>
+</span></dt><dd>
+    Show a help message and exit
+</dd><dt><span class="term">
+<span class="strong"><strong>-r ROOT, --root ROOT</strong></span>
+</span></dt><dd>
+    Sync packages from the ROOT directory
+</dd><dt><span class="term">
+<span class="strong"><strong>--subdir CACHE</strong></span>
+</span></dt><dd>
+    Subdirectory of <span class="strong"><strong>ROOT</strong></span> to sync instead of full <span class="strong"><strong>ROOT</strong></span>
+</dd><dt><span class="term">
+<span class="strong"><strong>-d, --dryrun</strong></span>
+</span></dt><dd>
+    Display files that would be copied, but don’t actually execute the copy
+</dd><dt><span class="term">
+<span class="strong"><strong>--delete</strong></span>
+</span></dt><dd>
+    Do a sync-delete operation, removing files not in the source dir after
+    uploading is complete. Recommend using <span class="strong"><strong>--verbose</strong></span> with this flag
+</dd><dt><span class="term">
+<span class="strong"><strong>-v, --verbose</strong></span>
+</span></dt><dd>
+    Be verbose about checks and uploads, list every file
+</dd><dt><span class="term">
+<span class="strong"><strong>--s3-bucket BUCKETNAME</strong></span>
+</span></dt><dd>
+    Sync to <span class="strong"><strong>BUCKETNAME</strong></span>, defaults to <code class="literal">downloads.globus.org</code>
+</dd><dt><span class="term">
+<span class="strong"><strong>--s3-path PATH</strong></span>
+</span></dt><dd>
+    Path prefix to use in <span class="strong"><strong>BUCKETNAME</strong></span>, defaults to <code class="literal">toolkit/gt6</code>
+    Will have <code class="literal">data/</code> prepended, as all writes to the S3 bucket go into the
+    <code class="literal">data/</code> namespace
+</dd><dt><span class="term">
+<span class="strong"><strong>--compare-method METHOD</strong></span>
+</span></dt><dd>
+    How to compare files against S3. One of <span class="emphasis"><em>checksum</em></span>, <span class="emphasis"><em>size</em></span>, <span class="emphasis"><em>modified</em></span>
+    (i.e. mtime vs. S3 modified time), <span class="emphasis"><em>nocheck</em></span>. Defaults to <span class="emphasis"><em>checksum</em></span>
+</dd></dl></div></div><div class="refsect1"><a id="repo-s3-sync-SEEALSO"></a><h2>SEE ALSO</h2><p>repo-promote-package(1)</p></div><div class="refsect1"><a id="repo-s3-sync-AUTHOR"></a><h2>AUTHOR</h2><p>Copyright © 2014 University of Chicago</p></div></div></body></html>
